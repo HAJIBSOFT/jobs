@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة التحكم | إدارة الفعاليات والمواسم</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Tajawal', sans-serif; }</style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <header class="bg-slate-900 text-white sticky top-0 z-40 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-xl">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-base leading-tight">لوحة تحكم المسؤول</h1>
+          <p class="text-[11px] text-slate-400">إدارة وظائف المواسم والفعاليات</p>
+        </div>
+      </div>
+      <button onclick="openModal('modal-add-job')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition shadow">
+        <i class="fa-solid fa-plus"></i> إضافة فعالية جديدة
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-8">
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-black text-slate-900">قائمة الفعاليات المجدولة</h2>
+        <p class="text-xs text-slate-500 mt-0.5">يمكنك تعطيل ظهور أي فعالية أو فتح الرابط المنفصل لمراجعة متقدميها</p>
+      </div>
+      <button onclick="loadAdminJobs()" class="bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+        <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
+      </button>
+    </div>
+
+    <!-- جدول الفعاليات -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-xs md:text-sm">
+          <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+            <tr>
+              <th class="p-4">الفعالية والوظيفة</th>
+              <th class="p-4">المدينة</th>
+              <th class="p-4">الفترة</th>
+              <th class="p-4">الأجر اليومي</th>
+              <th class="p-4">الظهور بالموقع</th>
+              <th class="p-4 text-center">المتقدمين والرابط المباشر</th>
+            </tr>
+          </thead>
+          <tbody id="admin-jobs-tbody" class="divide-y divide-slate-100">
+            <tr><td colspan="6" class="p-8 text-center text-slate-400">جاري جلب الفعاليات...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- مودال إضافة فعالية جديدة -->
+  <div id="modal-add-job" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl my-auto">
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <h3 class="font-extrabold text-lg text-slate-900">إضافة فعالية جديدة</h3>
+        <button onclick="closeModal('modal-add-job')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form onsubmit="handleAddJob(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اسم الوظيفة / الفعالية *</label>
+          <input type="text" id="job-title" required class="w-full p-2.5 border rounded-xl" placeholder="مثال: مسؤول تنظيم البوابات - موسم الدرعية" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">رابط صورة الفعالية</label>
+          <input type="url" id="job-img" class="w-full p-2.5 border rounded-xl" placeholder="https://..." />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">المدينة *</label>
+            <input type="text" id="job-city" required class="w-full p-2.5 border rounded-xl" placeholder="الرياض" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الأجر اليومي (ريال) *</label>
+            <input type="number" id="job-wage" required class="w-full p-2.5 border rounded-xl" placeholder="400" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ البدء *</label>
+            <input type="date" id="job-start" required class="w-full p-2.5 border rounded-xl" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ الانتهاء *</label>
+            <input type="date" id="job-end" required class="w-full p-2.5 border rounded-xl" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الوصف والمهام الوظيفية *</label>
+          <textarea id="job-desc" required rows="3" class="w-full p-2.5 border rounded-xl" placeholder="شرح تفصيلي للمهام..."></textarea>
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">نشر الفعالية</button>
+          <button type="button" onclick="closeModal('modal-add-job')" class="px-4 py-2.5 border rounded-xl text-slate-600 font-bold">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://bigisnpdoqxmpjwpbncv.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_6ZtAL8lRYdreWg4Xhn6zLA_7-PwGvPJ";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.addEventListener('DOMContentLoaded', loadAdminJobs);
+
+    async function loadAdminJobs() {
+      const tbody = document.getElementById('admin-jobs-tbody');
+      const { data, error } = await supabaseClient.from('jobs').select('*').order('created_at', { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-500">${error.message}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.map(job => {
+        // رابط الصفحة المنفصلة لمتقدمي الفعالية
+        const applicantsUrl = `applicants.html?job_id=${job.id}`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-4 font-extrabold text-slate-900">${job.title}</td>
+            <td class="p-4 text-slate-600 font-medium">${job.city}</td>
+            <td class="p-4 text-slate-500 text-xs">${job.start_date} إلى ${job.end_date}</td>
+            <td class="p-4 font-black text-emerald-600">${job.daily_wage} ر.س</td>
+            <td class="p-4">
+              <button onclick="toggleJobStatus('${job.id}', ${job.is_active})" class="px-3 py-1 rounded-full text-xs font-bold transition ${job.is_active ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-rose-100 text-rose-700 hover:bg-rose-200'}">
+                ${job.is_active ? 'نشطة (تظهر)' : 'معطلة (مخفية)'}
+              </button>
+            </td>
+            <td class="p-4 text-center">
+              <div class="flex items-center justify-center gap-2">
+                <a href="${applicantsUrl}" class="bg-slate-900 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
+                  <i class="fa-solid fa-users text-xs"></i> عرض المتقدمين
+                </a>
+                <button onclick="copyApplicantsLink('${job.id}')" title="نسخ رابط صفحة المتقدمين" class="p-2 border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 rounded-xl transition">
+                  <i class="fa-regular fa-copy"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function toggleJobStatus(id, current) {
+      await supabaseClient.from('jobs').update({ is_active: !current }).eq('id', id);
+      loadAdminJobs();
+    }
+
+    async function handleAddJob(e) {
+      e.preventDefault();
+      await supabaseClient.from('jobs').insert([{
+        title: document.getElementById('job-title').value.trim(),
+        image_url: document.getElementById('job-img').value.trim() || 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg6TOYhCvdezJ9RkSJIhfmCo7RkziccHfs8zz6Y2WSbUM9WBr5QOP_miAyxs2IbDI5wz13byLrdhiebauWJhfbVr_yy_NnNeFiQBh9Iho2TSxTN4_apLY31OTB_e2xXZv4tmZ2uOzrFCSERu2FrnJ8DjS-3VK5lciA33_p9jNuAwMS3LXXdI3Qj5gAz9buw/s1408/Gemini_Generated_Image_bk451ebk451ebk45.jfif',
+        city: document.getElementById('job-city').value.trim(),
+        daily_wage: parseFloat(document.getElementById('job-wage').value),
+        start_date: document.getElementById('job-start').value,
+        end_date: document.getElementById('job-end').value,
+        description: document.getElementById('job-desc').value.trim(),
+        is_active: true
+      }]);
+      closeModal('modal-add-job');
+      loadAdminJobs();
+    }
+
+    function copyApplicantsLink(jobId) {
+      const fullUrl = `${window.location.origin}${window.location.pathname.replace('admin.html', '')}applicants.html?job_id=${jobId}`;
+      navigator.clipboard.writeText(fullUrl).then(() => {
+        alert("تم نسخ رابط صفحة المتقدمين المباشر بنجاح!");
+      });
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  </script>
+</body>
+</html>

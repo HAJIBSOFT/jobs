@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بوابة الوظائف الموسمية</title>
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Tajawal', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- شريط التنقل العلوي -->
+  <header class="bg-white/90 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-emerald-200">
+          <i class="fa-solid fa-briefcase"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg text-slate-900 leading-tight">مواسم | للتوظيف</h1>
+          <p class="text-xs text-slate-400">بوابة التوظيف الميداني والموسمي</p>
+        </div>
+      </div>
+
+      <!-- التبديل بين الواجهات -->
+      <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
+        <button id="btn-tab-user" onclick="switchView('user')" class="px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition">
+          <i class="fa-solid fa-user ml-1.5"></i> المتقدمين
+        </button>
+        <button id="btn-tab-admin" onclick="switchView('admin')" class="px-4 py-1.5 rounded-lg text-sm font-bold text-slate-600 hover:text-emerald-700 transition">
+          <i class="fa-solid fa-gear ml-1.5"></i> الإدارة
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================= واجهة المتقدم ======================= -->
+  <main id="view-user" class="flex-1 max-w-6xl mx-auto w-full p-4 md:p-6">
+    <!-- بنر تعريفي -->
+    <div class="bg-gradient-to-l from-emerald-700 to-teal-800 rounded-3xl p-6 md:p-10 text-white shadow-xl mb-8 relative overflow-hidden">
+      <div class="relative z-10 max-w-xl">
+        <span class="bg-white/20 text-xs px-3 py-1 rounded-full font-semibold mb-3 inline-block backdrop-blur-sm">فرص عمل متاحة</span>
+        <h2 class="text-2xl md:text-4xl font-extrabold mb-3">شارك في أضخم الفعاليات والمواسم!</h2>
+        <p class="text-emerald-100 text-sm md:text-base leading-relaxed">سجّل بياناتك بكل سهولة وابدأ العمل في أرقى المهرجانات والمعارض بالمملكة، بأجور يومية مجزية وخبرة قيّمة.</p>
+      </div>
+      <div class="absolute -left-10 -bottom-10 opacity-10 text-9xl">
+        <i class="fa-solid fa-compass"></i>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-fire text-amber-500"></i> الوظائف المتاحة حالياً
+      </h3>
+      <span id="jobs-count-badge" class="text-xs bg-slate-200 text-slate-700 font-bold px-3 py-1 rounded-full">0 وظائف</span>
+    </div>
+
+    <!-- شبكة كروت الوظائف -->
+    <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="col-span-full py-20 text-center text-slate-400">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-emerald-600"></i>
+        <p>جاري تحميل الوظائف المتاحة...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ======================= لوحة الإدارة ======================= -->
+  <main id="view-admin" class="flex-1 max-w-6xl mx-auto w-full p-4 md:p-6 hidden">
+    <!-- الإحصائيات والإجراءات -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-2xl font-extrabold text-slate-900">لوحة تحكم الفعاليات</h2>
+        <p class="text-slate-500 text-sm">إدارة الوظائف ومراجعة والتواصل مع المتقدمين</p>
+      </div>
+      <button onclick="openModal('modal-add-job')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-100 flex items-center gap-2">
+        <i class="fa-solid fa-plus"></i> إضافة فعالية جديدة
+      </button>
+    </div>
+
+    <!-- جدول / بطاقات إدارة الوظائف -->
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm mb-10">
+      <div class="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 flex justify-between items-center">
+        <span>قائمة الفعاليات المعلنة</span>
+        <button onclick="loadAdminJobs()" class="text-xs text-emerald-700 hover:underline"><i class="fa-solid fa-arrows-rotate ml-1"></i> تحديث</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-slate-100 text-slate-500">
+            <tr>
+              <th class="p-3.5">الفعالية / الوظيفة</th>
+              <th class="p-3.5">المدينة</th>
+              <th class="p-3.5">الفترة</th>
+              <th class="p-3.5">الأجر</th>
+              <th class="p-3.5">الحالة بالموقع</th>
+              <th class="p-3.5 text-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="admin-jobs-table" class="divide-y divide-slate-100">
+            <!-- تعبئة تلقائية -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- قسم المتقدمين للوظيفة المختارة -->
+    <section id="applicants-section" class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hidden">
+      <div class="flex flex-wrap justify-between items-center gap-3 border-b border-slate-100 pb-4 mb-5">
+        <div>
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">متقدمي الفعالية</span>
+          <h3 id="current-job-title" class="text-xl font-bold text-slate-900 mt-1">--</h3>
+        </div>
+
+        <!-- نمط العرض -->
+        <div class="flex items-center gap-2">
+          <div class="bg-slate-100 p-1 rounded-lg flex text-xs">
+            <button id="view-mode-cards" onclick="setApplicantsViewMode('cards')" class="px-3 py-1 rounded-md bg-white shadow-sm font-bold"><i class="fa-solid fa-table-cells-large"></i> بطاقات</button>
+            <button id="view-mode-table" onclick="setApplicantsViewMode('table')" class="px-3 py-1 rounded-md text-slate-500 font-bold"><i class="fa-solid fa-list"></i> جدول</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- الفلاتر -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">فلترة الجنسية</label>
+          <select id="filter-nationality" onchange="filterApplicants()" class="w-full text-xs p-2.5 border rounded-lg bg-white">
+            <option value="ALL">الكل</option>
+            <option value="SAUDI">سعوديون فقط</option>
+            <option value="NON_SAUDI">غير سعوديين (الكل)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">العمر من</label>
+          <input id="filter-age-min" type="number" min="15" max="80" placeholder="مثال: 18" oninput="filterApplicants()" class="w-full text-xs p-2.5 border rounded-lg bg-white" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">العمر إلى</label>
+          <input id="filter-age-max" type="number" min="15" max="80" placeholder="مثال: 30" oninput="filterApplicants()" class="w-full text-xs p-2.5 border rounded-lg bg-white" />
+        </div>
+      </div>
+
+      <div id="applicants-container">
+        <!-- يتم ملء المتقدمين هنا -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================= مودال التقديم على الوظيفة ======================= -->
+  <div id="modal-apply" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-fadeIn">
+      <!-- رأس المودال -->
+      <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div>
+          <h3 id="modal-job-title" class="font-bold text-lg text-slate-900">تقديم طلب</h3>
+          <p id="modal-job-meta" class="text-xs text-emerald-700 font-semibold"></p>
+        </div>
+        <button onclick="closeModal('modal-apply')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        <!-- الوصف الكامل للوظيفة -->
+        <div class="bg-emerald-50/70 border border-emerald-100 p-4 rounded-2xl">
+          <h4 class="text-xs font-bold text-emerald-800 mb-1"><i class="fa-solid fa-circle-info ml-1"></i> الوصف الوظيفي الكامل:</h4>
+          <p id="modal-job-desc" class="text-sm text-emerald-950 leading-relaxed"></p>
+        </div>
+
+        <!-- نموذج الإدخال -->
+        <form id="form-apply" onsubmit="handleApplicationSubmit(event)" class="space-y-4">
+          <input type="hidden" id="app-job-id" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الاسم الكامل *</label>
+              <input type="text" id="app-name" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="الاسم الرباعي" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني *</label>
+              <input type="email" id="app-email" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="example@domain.com" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">رقم الجوال *</label>
+              <input type="tel" id="app-phone" required dir="ltr" class="w-full text-right text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="05XXXXXXXX" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهوية / الإقامة *</label>
+              <input type="text" id="app-id" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="10XXXXXXXX" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الجنسية *</label>
+              <select id="app-nationality" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <!-- قائمة الدول العربية -->
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الميلاد *</label>
+              <input type="date" id="app-birth" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">مستوى اللغة الإنجليزية (من 5) *</label>
+            <div class="flex items-center gap-3 bg-slate-50 p-2.5 border border-slate-200 rounded-xl">
+              <input type="range" id="app-english" min="1" max="5" value="3" oninput="document.getElementById('eng-val').innerText = this.value + '/5'" class="w-full accent-emerald-600" />
+              <span id="eng-val" class="font-extrabold text-sm text-emerald-700 min-w-[36px]">3/5</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الأعمال السابقة والخبرات</label>
+            <textarea id="app-exp" rows="2" class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="اذكر الفعاليات أو الأعمال الميدانية التي عملت بها سابقاً..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الصورة الشخصية *</label>
+              <input type="file" id="app-photo" accept="image/*" required class="w-full text-xs text-slate-500 file:ml-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">السيرة الذاتية (CV) *</label>
+              <input type="file" id="app-cv" accept=".pdf,.doc,.docx" required class="w-full text-xs text-slate-500 file:ml-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex gap-3">
+            <button type="submit" id="btn-submit-apply" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-200">
+              إرسال طلب التقديم
+            </button>
+            <button type="button" onclick="closeModal('modal-apply')" class="px-5 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-100">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= مودال إضافة فعالية جديدة ======================= -->
+  <div id="modal-add-job" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl my-auto">
+      <div class="flex justify-between items-center mb-4 border-b pb-3">
+        <h3 class="font-bold text-lg text-slate-900">إضافة فعالية / وظيفة جديدة</h3>
+        <button onclick="closeModal('modal-add-job')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form onsubmit="handleAddJobSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">عنوان الفعالية / الوظيفة *</label>
+          <input type="text" id="new-job-title" required class="w-full text-sm p-2.5 border rounded-xl" placeholder="مثال: منظم منطقة المطاعم" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">رابط صورة الفعالية</label>
+          <input type="url" id="new-job-img" class="w-full text-sm p-2.5 border rounded-xl" placeholder="https://..." />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">المدينة *</label>
+            <input type="text" id="new-job-city" required class="w-full text-sm p-2.5 border rounded-xl" placeholder="الرياض، جدة..." />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الأجر اليومي (ريال) *</label>
+            <input type="number" id="new-job-wage" required class="w-full text-sm p-2.5 border rounded-xl" placeholder="350" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ البدء *</label>
+            <input type="date" id="new-job-start" required class="w-full text-sm p-2.5 border rounded-xl" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الانتهاء *</label>
+            <input type="date" id="new-job-end" required class="w-full text-sm p-2.5 border rounded-xl" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">الوصف الوظيفي والمهام *</label>
+          <textarea id="new-job-desc" required rows="3" class="w-full text-sm p-2.5 border rounded-xl" placeholder="تفاصيل المهام والشروط..."></textarea>
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">حفظ ونشر</button>
+          <button type="button" onclick="closeModal('modal-add-job')" class="px-4 py-2.5 border rounded-xl text-slate-600">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================= مودال نجاح التقديم ======================= -->
+  <div id="modal-success" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="text-xl font-extrabold text-slate-900 mb-2">تم التقديم بنجاح!</h3>
+      <p class="text-slate-600 text-sm leading-relaxed mb-6">
+        تم استلام طلبك، وسيتم التواصل معك في حال اختيارك لهذه الفعالية. نتمنى لك التوفيق!
+      </p>
+      <button onclick="closeModal('modal-success')" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl hover:bg-emerald-700 transition">
+        حسناً
+      </button>
+    </div>
+  </div>
+
+  <!-- سكربت التطبيق التفاعلي -->
+ <!-- سكربت التطبيق التفاعلي (معدّل بدون تعارض الأسماء) -->
+  <script>
+    // 1. إعدادات Supabase (استخدام اسم supabaseClient لتجنب تعارض الـ CDN)
+    const SUPABASE_URL = "https://bigisnpdoqxmpjwpbncv.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_6ZtAL8lRYdreWg4Xhn6zLA_7-PwGvPJ";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // قائمة الدول العربية
+    const ARAB_COUNTRIES = [
+      "المملكة العربية السعودية", "الإمارات العربية المتحدة", "الكويت", "قطر", "البحرين", "عمان",
+      "مصر", "الأردن", "العراق", "لبنان", "سوريا", "فلسطين", "اليمن", "السودان", "المغرب",
+      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي", "جزر القمر"
+    ];
+
+    let currentJobs = [];
+    let currentApplicants = [];
+    let activeJobForApplicants = null;
+    let applicantsViewMode = 'cards'; // 'cards' or 'table'
+
+    // تهيئة الصفحة
+    window.addEventListener('DOMContentLoaded', () => {
+      populateCountries();
+      loadUserSavedData(); // التعبئة التلقائية من البيانات المحفوظة
+      loadPublicJobs();
+    });
+
+    // ملء قائمة الدول
+    function populateCountries() {
+      const select = document.getElementById('app-nationality');
+      if (select) {
+        select.innerHTML = ARAB_COUNTRIES.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+      const filterSelect = document.getElementById('filter-nationality');
+      if (filterSelect) {
+        ARAB_COUNTRIES.forEach(c => {
+          if (c !== "المملكة العربية السعودية") {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            filterSelect.appendChild(opt);
+          }
+        });
+      }
+    }
+
+    // التنقل بين واجهة المتقدم ولوحة الإدارة
+    function switchView(view) {
+      const userView = document.getElementById('view-user');
+      const adminView = document.getElementById('view-admin');
+      const btnUser = document.getElementById('btn-tab-user');
+      const btnAdmin = document.getElementById('btn-tab-admin');
+
+      if (view === 'user') {
+        userView.classList.remove('hidden');
+        adminView.classList.add('hidden');
+        btnUser.className = "px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition";
+        btnAdmin.className = "px-4 py-1.5 rounded-lg text-sm font-bold text-slate-600 hover:text-emerald-700 transition";
+        loadPublicJobs();
+      } else {
+        userView.classList.add('hidden');
+        adminView.classList.remove('hidden');
+        btnAdmin.className = "px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition";
+        btnUser.className = "px-4 py-1.5 rounded-lg text-sm font-bold text-slate-600 hover:text-emerald-700 transition";
+        loadAdminJobs();
+      }
+    }
+
+    // تحميل الوظائف للعامة
+    async function loadPublicJobs() {
+      const grid = document.getElementById('jobs-grid');
+      try {
+        const { data, error } = await supabaseClient
+          .from('jobs')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        currentJobs = data || [];
+        document.getElementById('jobs-count-badge').innerText = `${currentJobs.length} وظائف`;
+
+        if (currentJobs.length === 0) {
+          grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">لا توجد وظائف معلنة حالياً.</div>`;
+          return;
+        }
+
+        grid.innerHTML = currentJobs.map(job => `
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
+            <div class="h-44 w-full relative overflow-hidden bg-slate-100">
+              <img src="${job.image_url || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30'}" alt="${job.title}" class="w-full h-full object-cover">
+              <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-slate-800 flex items-center gap-1 shadow-sm">
+                <i class="fa-solid fa-location-dot text-emerald-600"></i> ${job.city}
+              </div>
+            </div>
+            
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <h4 class="font-extrabold text-slate-900 text-lg mb-2">${job.title}</h4>
+                <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-4">${job.description}</p>
+                
+                <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-4 text-xs">
+                  <div>
+                    <span class="text-slate-400 block mb-0.5">الفترة:</span>
+                    <span class="font-bold text-slate-700">${job.start_date} إلى ${job.end_date}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block mb-0.5">الأجر اليومي:</span>
+                    <span class="font-black text-emerald-600 text-sm">${job.daily_wage} ريال</span>
+                  </div>
+                </div>
+              </div>
+
+              <button onclick="openApplyModal('${job.id}')" class="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                <span>تقديم الآن</span>
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        grid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">حدث خطأ أثناء تحميل الوظائف: ${err.message}</div>`;
+      }
+    }
+
+    // فتح مودال التقديم
+    function openApplyModal(jobId) {
+      const job = currentJobs.find(j => j.id === jobId);
+      if (!job) return;
+
+      document.getElementById('app-job-id').value = job.id;
+      document.getElementById('modal-job-title').innerText = job.title;
+      document.getElementById('modal-job-meta').innerText = `${job.city} | الأجر اليومي: ${job.daily_wage} ريال | من ${job.start_date} إلى ${job.end_date}`;
+      document.getElementById('modal-job-desc').innerText = job.description;
+
+      loadUserSavedData();
+      openModal('modal-apply');
+    }
+
+    // حفظ البيانات في التخزين المحلي
+    function saveUserDataLocally(data) {
+      const toSave = {
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        national_id: data.national_id,
+        nationality: data.nationality,
+        birth_date: data.birth_date,
+        english_level: data.english_level,
+        experience: data.experience
+      };
+      localStorage.setItem('seasonal_applicant_profile', JSON.stringify(toSave));
+    }
+
+    // التعبئة التلقائية
+    function loadUserSavedData() {
+      const saved = localStorage.getItem('seasonal_applicant_profile');
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        if(data.full_name) document.getElementById('app-name').value = data.full_name;
+        if(data.email) document.getElementById('app-email').value = data.email;
+        if(data.phone) document.getElementById('app-phone').value = data.phone;
+        if(data.national_id) document.getElementById('app-id').value = data.national_id;
+        if(data.nationality) document.getElementById('app-nationality').value = data.nationality;
+        if(data.birth_date) document.getElementById('app-birth').value = data.birth_date;
+        if(data.english_level) {
+          document.getElementById('app-english').value = data.english_level;
+          document.getElementById('eng-val').innerText = data.english_level + '/5';
+        }
+        if(data.experience) document.getElementById('app-exp').value = data.experience;
+      } catch(e) {}
+    }
+
+    // رفع الملفات
+    async function uploadFile(file, folder) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      const { data, error } = await supabaseClient.storage
+        .from('resumes')
+        .upload(fileName, file);
+
+      if (error) throw error;
+      
+      const { data: publicData } = supabaseClient.storage
+        .from('resumes')
+        .getPublicUrl(fileName);
+
+      return publicData.publicUrl;
+    }
+
+    // تقديم الطلب
+    async function handleApplicationSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-apply');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري رفع الملفات والتقديم...`;
+
+      try {
+        const photoFile = document.getElementById('app-photo').files[0];
+        const cvFile = document.getElementById('app-cv').files[0];
+
+        let photoUrl = "";
+        let cvUrl = "";
+
+        if (photoFile) photoUrl = await uploadFile(photoFile, 'photos');
+        if (cvFile) cvUrl = await uploadFile(cvFile, 'cvs');
+
+        const applicationData = {
+          job_id: document.getElementById('app-job-id').value,
+          full_name: document.getElementById('app-name').value.trim(),
+          email: document.getElementById('app-email').value.trim(),
+          phone: document.getElementById('app-phone').value.trim(),
+          national_id: document.getElementById('app-id').value.trim(),
+          nationality: document.getElementById('app-nationality').value,
+          birth_date: document.getElementById('app-birth').value,
+          english_level: parseInt(document.getElementById('app-english').value),
+          experience: document.getElementById('app-exp').value.trim(),
+          photo_url: photoUrl,
+          cv_url: cvUrl
+        };
+
+        const { error } = await supabaseClient.from('applications').insert([applicationData]);
+        if (error) throw error;
+
+        saveUserDataLocally(applicationData);
+        closeModal('modal-apply');
+        openModal('modal-success');
+      } catch (err) {
+        alert("فشل التقديم: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // ==================== لوحة الإدارة ==================== //
+
+    async function loadAdminJobs() {
+      const tbody = document.getElementById('admin-jobs-table');
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</td></tr>`;
+
+      const { data, error } = await supabaseClient.from('jobs').select('*').order('created_at', { ascending: false });
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-red-500">${error.message}</td></tr>`;
+        return;
+      }
+
+      currentJobs = data || [];
+      tbody.innerHTML = currentJobs.map(job => `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-bold text-slate-800">${job.title}</td>
+          <td class="p-3.5 text-slate-600">${job.city}</td>
+          <td class="p-3.5 text-slate-500 text-xs">${job.start_date} ↔ ${job.end_date}</td>
+          <td class="p-3.5 font-bold text-emerald-600">${job.daily_wage} ريال</td>
+          <td class="p-3.5">
+            <button onclick="toggleJobStatus('${job.id}', ${job.is_active})" class="px-2.5 py-1 rounded-full text-xs font-bold ${job.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+              ${job.is_active ? 'معروضة بالموقع' : 'مخفية'}
+            </button>
+          </td>
+          <td class="p-3.5 text-center">
+            <button onclick="viewApplicants('${job.id}', '${escapeHtml(job.title)}')" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition">
+              <i class="fa-solid fa-users ml-1"></i> المتقدمين
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function toggleJobStatus(jobId, currentStatus) {
+      const { error } = await supabaseClient.from('jobs').update({ is_active: !currentStatus }).eq('id', jobId);
+      if (error) alert(error.message);
+      else loadAdminJobs();
+    }
+
+    async function handleAddJobSubmit(e) {
+      e.preventDefault();
+      const newJob = {
+        title: document.getElementById('new-job-title').value.trim(),
+        image_url: document.getElementById('new-job-img').value.trim() || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
+        city: document.getElementById('new-job-city').value.trim(),
+        daily_wage: parseFloat(document.getElementById('new-job-wage').value),
+        start_date: document.getElementById('new-job-start').value,
+        end_date: document.getElementById('new-job-end').value,
+        description: document.getElementById('new-job-desc').value.trim(),
+        is_active: true
+      };
+
+      const { error } = await supabaseClient.from('jobs').insert([newJob]);
+      if (error) alert("خطأ: " + error.message);
+      else {
+        closeModal('modal-add-job');
+        loadAdminJobs();
+      }
+    }
+
+    async function viewApplicants(jobId, jobTitle) {
+      activeJobForApplicants = { id: jobId, title: jobTitle };
+      document.getElementById('applicants-section').classList.remove('hidden');
+      document.getElementById('current-job-title').innerText = jobTitle;
+
+      const container = document.getElementById('applicants-container');
+      container.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> جاري جلب المتقدمين...</div>`;
+
+      const { data, error } = await supabaseClient.from('applications').select('*').eq('job_id', jobId).order('created_at', { ascending: false });
+      if (error) {
+        container.innerHTML = `<div class="py-8 text-center text-red-500">${error.message}</div>`;
+        return;
+      }
+
+      currentApplicants = data || [];
+      filterApplicants();
+      document.getElementById('applicants-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function calculateAge(birthDateString) {
+      const birth = new Date(birthDateString);
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+      return age;
+    }
+
+    function filterApplicants() {
+      const natFilter = document.getElementById('filter-nationality').value;
+      const minAge = parseInt(document.getElementById('filter-age-min').value) || 0;
+      const maxAge = parseInt(document.getElementById('filter-age-max').value) || 120;
+
+      const filtered = currentApplicants.filter(app => {
+        const age = calculateAge(app.birth_date);
+        if (age < minAge || age > maxAge) return false;
+
+        if (natFilter === 'SAUDI') return app.nationality === 'المملكة العربية السعودية';
+        if (natFilter === 'NON_SAUDI') return app.nationality !== 'المملكة العربية السعودية';
+        if (natFilter !== 'ALL') return app.nationality === natFilter;
+
+        return true;
+      });
+
+      renderApplicants(filtered);
+    }
+
+    function setApplicantsViewMode(mode) {
+      applicantsViewMode = mode;
+      document.getElementById('view-mode-cards').className = mode === 'cards' ? 'px-3 py-1 rounded-md bg-white shadow-sm font-bold' : 'px-3 py-1 rounded-md text-slate-500 font-bold';
+      document.getElementById('view-mode-table').className = mode === 'table' ? 'px-3 py-1 rounded-md bg-white shadow-sm font-bold' : 'px-3 py-1 rounded-md text-slate-500 font-bold';
+      filterApplicants();
+    }
+
+    function renderApplicants(list) {
+      const container = document.getElementById('applicants-container');
+      if (list.length === 0) {
+        container.innerHTML = `<div class="py-12 text-center text-slate-400">لا يوجد متقدمين مطابقين للخيارات المحددة.</div>`;
+        return;
+      }
+
+      if (applicantsViewMode === 'cards') {
+        container.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${list.map(app => renderApplicantCard(app)).join('')}
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-100 text-slate-600">
+                <tr>
+                  <th class="p-3">المتقدم</th>
+                  <th class="p-3">الجنسية / العمر</th>
+                  <th class="p-3">الهوية</th>
+                  <th class="p-3">الإنجليزي</th>
+                  <th class="p-3">الملفات</th>
+                  <th class="p-3 text-center">التواصل المباشر</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${list.map(app => renderApplicantTableRow(app)).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+
+    function renderApplicantCard(app) {
+      const age = calculateAge(app.birth_date);
+      const isSaudi = app.nationality === 'المملكة العربية السعودية';
+      const cleanPhone = app.phone.replace(/[^0-9]/g, '');
+      const intlPhone = cleanPhone.startsWith('0') ? '966' + cleanPhone.substring(1) : cleanPhone;
+      
+      const msg = encodeURIComponent(`مرحباً أخي/أختي ${app.full_name}، نتواصل معك بخصوص تقديمك على وظيفة "${activeJobForApplicants ? activeJobForApplicants.title : ''}". نود التنسيق معك بخصوص الخطوة القادمة.`);
+
+      return `
+        <div class="border border-slate-200 rounded-2xl p-4 bg-white flex flex-col justify-between hover:shadow-md transition">
+          <div>
+            <div class="flex items-start gap-3 mb-3">
+              <img src="${app.photo_url || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-full object-cover border-2 border-emerald-500 shadow-sm" alt="${app.full_name}">
+              <div class="flex-1">
+                <h4 class="font-bold text-slate-900 text-sm">${app.full_name}</h4>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${isSaudi ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'}">
+                    ${app.nationality}
+                  </span>
+                  <span class="text-[11px] text-slate-400">العمر: ${age} سنة</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl mb-3">
+              <div><strong class="text-slate-800">الهوية:</strong> ${app.national_id}</div>
+              <div><strong class="text-slate-800">الإنجليزية:</strong> ${'⭐'.repeat(app.english_level || 1)} (${app.english_level}/5)</div>
+              <div><strong class="text-slate-800">الخبرات:</strong> <span class="text-slate-500">${app.experience || 'لا توجد تفاصيل'}</span></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex gap-2 mb-3">
+              ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" class="flex-1 text-center py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs"><i class="fa-solid fa-file-pdf ml-1 text-rose-500"></i> عرض الـ CV</a>` : ''}
+              ${app.photo_url ? `<a href="${app.photo_url}" target="_blank" class="text-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs"><i class="fa-solid fa-image text-emerald-600"></i> الصورة</a>` : ''}
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
+              <a href="https://wa.me/${intlPhone}?text=${msg}" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm">
+                <i class="fa-brands fa-whatsapp text-sm"></i> واتساب
+              </a>
+              <a href="mailto:${app.email}?subject=بخصوص وظيفة ${encodeURIComponent(activeJobForApplicants ? activeJobForApplicants.title : '')}&body=${msg}" class="bg-sky-600 hover:bg-sky-700 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm">
+                <i class="fa-solid fa-envelope text-xs"></i> إيميل
+              </a>
+              <a href="tel:${app.phone}" class="bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm">
+                <i class="fa-solid fa-phone text-xs"></i> اتصال
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderApplicantTableRow(app) {
+      const age = calculateAge(app.birth_date);
+      const cleanPhone = app.phone.replace(/[^0-9]/g, '');
+      const intlPhone = cleanPhone.startsWith('0') ? '966' + cleanPhone.substring(1) : cleanPhone;
+      const msg = encodeURIComponent(`مرحباً ${app.full_name}، نتواصل معك بخصوص ترشيحك لوظيفة "${activeJobForApplicants ? activeJobForApplicants.title : ''}".`);
+
+      return `
+        <tr class="hover:bg-slate-50">
+          <td class="p-3 flex items-center gap-2">
+            <img src="${app.photo_url || 'https://via.placeholder.com/150'}" class="w-8 h-8 rounded-full object-cover">
+            <div>
+              <div class="font-bold text-slate-800">${app.full_name}</div>
+              <div class="text-[10px] text-slate-400">${app.email}</div>
+            </div>
+          </td>
+          <td class="p-3">${app.nationality} (${age} سنة)</td>
+          <td class="p-3 font-mono">${app.national_id}</td>
+          <td class="p-3 text-amber-500 font-bold">${app.english_level}/5</td>
+          <td class="p-3">
+            ${app.cv_url ? `<a href="${app.cv_url}" target="_blank" class="text-emerald-700 underline font-bold">الـ CV</a>` : '-'}
+          </td>
+          <td class="p-3">
+            <div class="flex justify-center gap-2">
+              <a href="https://wa.me/${intlPhone}?text=${msg}" target="_blank" class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition"><i class="fa-brands fa-whatsapp"></i></a>
+              <a href="mailto:${app.email}?subject=وظيفة ${encodeURIComponent(activeJobForApplicants ? activeJobForApplicants.title : '')}&body=${msg}" class="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center hover:bg-sky-600 hover:text-white transition"><i class="fa-solid fa-envelope"></i></a>
+              <a href="tel:${app.phone}" class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center hover:bg-slate-800 hover:text-white transition"><i class="fa-solid fa-phone"></i></a>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function escapeHtml(text) { return text ? text.replace(/'/g, "\\'") : ''; }
+  </script>
+</body>
+</html>

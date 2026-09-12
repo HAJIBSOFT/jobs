@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>متقدمي الفعالية | لوحة الفرز</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Tajawal', sans-serif; }</style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- شريط علوي -->
+  <header class="bg-white sticky top-0 z-40 border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        
+        <div>
+          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">لوحة الاختيار والفرز</span>
+          <h1 id="event-title" class="font-black text-slate-900 text-base md:text-lg">جاري جلب الفعالية...</h1>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="filtered-count" class="text-xs font-extrabold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl">0 متقدمين</span>
+        <button onclick="loadApplicants()" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center">
+          <i class="fa-solid fa-rotate-right text-xs"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto w-full p-4 md:p-6 flex-1">
+    <!-- صندوق الفلاتر الذكية المتعددة -->
+    <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm mb-6">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <span class="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-emerald-600"></i> خيارات الفرز والفلترة
+        </span>
+        <button onclick="resetFilters()" class="text-xs text-rose-600 hover:underline font-bold">إعادة تعيين</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+        <!-- فلتر الجنس -->
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">الجنس</label>
+          <select id="filter-gender" onchange="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white">
+            <option value="ALL">الكل (ذكور وإناث)</option>
+            <option value="ذكر">ذكور فقط</option>
+            <option value="أنثى">إناث فقط</option>
+          </select>
+        </div>
+
+        <!-- فلتر الجنسية -->
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">الجنسية</label>
+          <select id="filter-nationality" onchange="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white">
+            <option value="ALL">جميع الجنسيات</option>
+            <option value="SAUDI">سعوديون فقط</option>
+            <option value="NON_SAUDI">غير سعوديين (الكل)</option>
+          </select>
+        </div>
+
+        <!-- فلتر العمر الأدنى والأعلى -->
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">العمر من</label>
+          <input type="number" id="filter-min-age" min="15" max="70" placeholder="مثال: 18" oninput="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">العمر إلى</label>
+          <input type="number" id="filter-max-age" min="15" max="70" placeholder="مثال: 30" oninput="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white" />
+        </div>
+
+        <!-- فلتر حالة التواصل والحفظ -->
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">حالة المتابعة</label>
+          <select id="filter-status" onchange="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white">
+            <option value="ALL">الكل</option>
+            <option value="CONTACTED">تم التواصل معهم فقط</option>
+            <option value="NOT_CONTACTED">لم يتم التواصل بعد</option>
+            <option value="BOOKMARKED">المميزين بنجمة (المحفوظين)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- شبكة بطاقات المتقدمين بتصميمها الجديد -->
+    <div id="applicants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- تحميل البطاقات -->
+    </div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://bigisnpdoqxmpjwpbncv.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_6ZtAL8lRYdreWg4Xhn6zLA_7-PwGvPJ";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const JOB_ID = urlParams.get('job_id');
+
+    let allApplicants = [];
+    let jobDetails = null;
+
+    const ARAB_COUNTRIES = [
+      "المملكة العربية السعودية", "الإمارات العربية المتحدة", "الكويت", "قطر", "البحرين", "عمان",
+      "مصر", "الأردن", "العراق", "لبنان", "سوريا", "فلسطين", "اليمن", "السودان", "المغرب",
+      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي", "جزر القمر"
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!JOB_ID) {
+        alert("لم يتم تحديد الفعالية ");
+        window.location.href = 'index.html';
+        return;
+      }
+      populateNationalityFilter();
+      loadApplicants();
+    });
+
+    function populateNationalityFilter() {
+      const select = document.getElementById('filter-nationality');
+      ARAB_COUNTRIES.forEach(c => {
+        if(c !== "المملكة العربية السعودية") {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = c;
+          select.appendChild(opt);
+        }
+      });
+    }
+
+    async function loadApplicants() {
+      const grid = document.getElementById('applicants-grid');
+      grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-3xl mb-2 text-emerald-600"></i><p>جاري تحميل المتقدمين...</p></div>`;
+
+      // 1. جلب اسم الفعالية
+      const { data: job } = await supabaseClient.from('jobs').select('*').eq('id', JOB_ID).single();
+      if (job) {
+        jobDetails = job;
+        document.getElementById('event-title').innerText = `${job.title} (${job.city})`;
+      }
+
+      // 2. جلب المتقدمين
+      const { data, error } = await supabaseClient.from('applications').select('*').eq('job_id', JOB_ID).order('created_at', { ascending: false });
+
+      if (error) {
+        grid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">${error.message}</div>`;
+        return;
+      }
+
+      allApplicants = data || [];
+      applyFilters();
+    }
+
+    function calculateAge(birthDateString) {
+      const birth = new Date(birthDateString);
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+      return age;
+    }
+
+    function applyFilters() {
+      const gender = document.getElementById('filter-gender').value;
+      const nationality = document.getElementById('filter-nationality').value;
+      const minAge = parseInt(document.getElementById('filter-min-age').value) || 0;
+      const maxAge = parseInt(document.getElementById('filter-max-age').value) || 120;
+      const status = document.getElementById('filter-status').value;
+
+      const filtered = allApplicants.filter(app => {
+        // فلتر الجنس
+        if (gender !== 'ALL' && app.gender !== gender) return false;
+
+        // فلتر الجنسية
+        if (nationality === 'SAUDI' && app.nationality !== 'المملكة العربية السعودية') return false;
+        if (nationality === 'NON_SAUDI' && app.nationality === 'المملكة العربية السعودية') return false;
+        if (nationality !== 'ALL' && nationality !== 'SAUDI' && nationality !== 'NON_SAUDI' && app.nationality !== nationality) return false;
+
+        // فلتر العمر
+        const age = calculateAge(app.birth_date);
+        if (age < minAge || age > maxAge) return false;
+
+        // فلتر الحالة
+        if (status === 'CONTACTED' && !app.is_contacted) return false;
+        if (status === 'NOT_CONTACTED' && app.is_contacted) return false;
+        if (status === 'BOOKMARKED' && !app.is_bookmarked) return false;
+
+        return true;
+      });
+
+      document.getElementById('filtered-count').innerText = `${filtered.length} من أصل ${allApplicants.length}`;
+      renderCards(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-gender').value = 'ALL';
+      document.getElementById('filter-nationality').value = 'ALL';
+      document.getElementById('filter-min-age').value = '';
+      document.getElementById('filter-max-age').value = '';
+      document.getElementById('filter-status').value = 'ALL';
+      applyFilters();
+    }
+
+    // ==================== التصميم الاحترافي الجديد للبطاقة ==================== //
+    function renderCards(list) {
+      const grid = document.getElementById('applicants-grid');
+      if (list.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-400 font-bold">لا يوجد أي متقدمين يطابقون خيارات الفرز.</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(app => {
+        const age = calculateAge(app.birth_date);
+        const cleanPhone = app.phone.replace(/[^0-9]/g, '');
+        const intlPhone = cleanPhone.startsWith('0') ? '966' + cleanPhone.substring(1) : cleanPhone;
+        const msg = encodeURIComponent(`مرحباً أخي/أختي ${app.full_name}، نتواصل معك بخصوص تقديمك على وظيفة "${jobDetails ? jobDetails.title : 'الفعالية'}". نود التنسيق معك بخصوص المقابلة والخطوات القادمة.`);
+
+        return `
+          <div class="bg-white rounded-3xl border ${app.is_contacted ? 'border-emerald-300 ring-2 ring-emerald-100' : 'border-slate-200'} p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition relative">
+            
+            <!-- أزرار الإجراءات السريعة في زاوية البطاقة (نجمة الحفظ + زر علامة التواصل) -->
+            <div class="absolute top-4 left-4 flex items-center gap-1.5 z-10">
+              <!-- علامة الحفظ / المفاضلة -->
+              <button onclick="toggleBookmark('${app.id}', ${app.is_bookmarked})" title="حفظ للمفاضلة" class="w-8 h-8 rounded-full flex items-center justify-center transition ${app.is_bookmarked ? 'bg-amber-100 text-amber-500' : 'bg-slate-100 text-slate-400 hover:text-amber-500'}">
+                <i class="fa-solid fa-star text-xs"></i>
+              </button>
+              
+              <!-- علامة تم التواصل -->
+              <button onclick="toggleContacted('${app.id}', ${app.is_contacted})" title="تحديد كتم التواصل" class="px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 transition ${app.is_contacted ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'}">
+                <i class="fa-solid fa-check text-[10px]"></i>
+                <span>${app.is_contacted ? 'تم التواصل' : 'لم يُتواصل'}</span>
+              </button>
+            </div>
+
+            <!-- الجزء العلوي: الصورة والاسم الكامل فقط -->
+            <div>
+              <div class="flex items-center gap-4 mb-4 pt-1">
+                <div class="relative">
+                  <img src="${app.photo_url || 'https://via.placeholder.com/150'}" class="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-500 shadow-sm" alt="${app.full_name}">
+                  <span class="absolute -bottom-1 -left-1 text-[10px] font-bold px-1.5 py-0.2 rounded-md ${app.gender === 'ذكر' ? 'bg-blue-600 text-white' : 'bg-pink-600 text-white'}">
+                    ${app.gender || 'ذكر'}
+                  </span>
+                </div>
+                <div>
+                  <h3 class="font-black text-slate-900 text-base leading-snug">${app.full_name}</h3>
+                  <p class="text-[11px] text-slate-400 mt-0.5">${app.email}</p>
+                </div>
+              </div>
+
+              <!-- المربع المطور بالأسفل: (الجنسية والعمر والجنس بالأعلى) ثم (رقم الهوية والإنجليزي) -->
+              <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mb-4 text-xs space-y-2.5">
+                <!-- الصف الأول: الجنسية + العمر + الجنس -->
+                <div class="flex flex-wrap items-center gap-2 pb-2.5 border-b border-slate-200/70">
+                  <span class="bg-white border border-slate-200 text-slate-800 font-extrabold px-2.5 py-1 rounded-lg">
+                    <i class="fa-solid fa-globe text-emerald-600 ml-1"></i> ${app.nationality}
+                  </span>
+                  <span class="bg-white border border-slate-200 text-slate-700 font-bold px-2 py-1 rounded-lg">
+                    العمر: ${age} سنة
+                  </span>
+                  <span class="bg-white border border-slate-200 text-slate-700 font-bold px-2 py-1 rounded-lg">
+                    ${app.gender || 'ذكر'}
+                  </span>
+                </div>
+
+                <!-- الصف الثاني: رقم الهوية + مستوى الإنجليزية -->
+                <div class="grid grid-cols-2 gap-2 text-slate-600 pt-0.5">
+                  <div>
+                    <span class="text-slate-400 block text-[10px]">رقم الهوية / الإقامة:</span>
+                    <span class="font-mono font-bold text-slate-900 text-xs">${app.national_id}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block text-[10px]">مستوى الإنجليزية:</span>
+                    <span class="font-extrabold text-amber-500">${'★'.repeat(app.english_level || 1)} <span class="text-slate-700">(${app.english_level}/5)</span></span>
+                  </div>
+                </div>
+
+                <!-- الخبرات -->
+                ${app.experience ? `
+                  <div class="pt-2 border-t border-slate-200/70">
+                    <span class="text-slate-400 block text-[10px] mb-0.5">الخبرات والأعمال السابقة:</span>
+                    <p class="text-slate-700 text-[11px] leading-relaxed line-clamp-2">${app.experience}</p>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- الجزء السفلي: روابط الملفات وأزرار التواصل المباشر مع التحديث التلقائي -->
+            <div>
+              <div class="flex gap-2 mb-3">
+                ${app.cv_url ? `
+                  <a href="${app.cv_url}" target="_blank" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs text-center flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-file-pdf text-rose-500"></i> فتح السيرة الذاتية
+                  </a>
+                ` : ''}
+                ${app.photo_url ? `
+                  <a href="${app.photo_url}" target="_blank" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center transition" title="عرض الصورة بالحجم الكامل">
+                    <i class="fa-solid fa-image text-emerald-600"></i>
+                  </a>
+                ` : ''}
+              </div>
+
+              <!-- أزرار التواصل المباشر السريع -->
+              <div class="grid grid-cols-3 gap-2">
+                <a href="https://wa.me/${intlPhone}?text=${msg}" target="_blank" onclick="markAsContactedQuick('${app.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition">
+                  <i class="fa-brands fa-whatsapp text-sm"></i> واتساب
+                </a>
+                <a href="mailto:${app.email}?subject=بخصوص فعالية ${encodeURIComponent(jobDetails ? jobDetails.title : '')}&body=${msg}" onclick="markAsContactedQuick('${app.id}')" class="bg-sky-600 hover:bg-sky-700 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition">
+                  <i class="fa-solid fa-envelope text-xs"></i> إيميل
+                </a>
+                <a href="tel:${app.phone}" onclick="markAsContactedQuick('${app.id}')" class="bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition">
+                  <i class="fa-solid fa-phone text-xs"></i> اتصال
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // تبديل حالة الحفظ (Bookmark)
+    async function toggleBookmark(id, current) {
+      const { error } = await supabaseClient.from('applications').update({ is_bookmarked: !current }).eq('id', id);
+      if (!error) {
+        const item = allApplicants.find(a => a.id === id);
+        if (item) item.is_bookmarked = !current;
+        applyFilters();
+      }
+    }
+
+    // تبديل حالة تم التواصل
+    async function toggleContacted(id, current) {
+      const { error } = await supabaseClient.from('applications').update({ is_contacted: !current }).eq('id', id);
+      if (!error) {
+        const item = allApplicants.find(a => a.id === id);
+        if (item) item.is_contacted = !current;
+        applyFilters();
+      }
+    }
+
+    // تحديث تلقائي للحالة عند الضغط على أزرار الاتصال/الواتساب
+    async function markAsContactedQuick(id) {
+      const item = allApplicants.find(a => a.id === id);
+      if (item && !item.is_contacted) {
+        await supabaseClient.from('applications').update({ is_contacted: true }).eq('id', id);
+        item.is_contacted = true;
+        applyFilters();
+      }
+    }
+  </script>
+</body>
+</html>

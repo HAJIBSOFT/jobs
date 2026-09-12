@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بوابة الوظائف والفعاليات الموسمية</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Tajawal', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        
+        <div>
+          <h1 class="font-black text-lg text-slate-900 leading-tight">HAJIB EVENT</h1>
+          <p class="text-xs text-slate-400">اول منصة للوظائف الموسمية فالمملكة </p>
+        </div>
+      </div>
+      
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl mx-auto w-full p-4 md:p-6">
+ <!-- بنر تعريفي مع صورة خلفية وطبقة تعتيم احترافية -->
+    <div class="relative rounded-3xl p-6 md:p-12 text-white shadow-xl mb-8 overflow-hidden min-h-[220px] flex items-center">
+      <!-- 1. رابط صورة الخلفية (ضع رابط صورتك هنا في src) -->
+      <img 
+        src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg6TOYhCvdezJ9RkSJIhfmCo7RkziccHfs8zz6Y2WSbUM9WBr5QOP_miAyxs2IbDI5wz13byLrdhiebauWJhfbVr_yy_NnNeFiQBh9Iho2TSxTN4_apLY31OTB_e2xXZv4tmZ2uOzrFCSERu2FrnJ8DjS-3VK5lciA33_p9jNuAwMS3LXXdI3Qj5gAz9buw/s1408/Gemini_Generated_Image_bk451ebk451ebk45.jfif" 
+        alt="خلفية الفعاليات" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+
+      <!-- 2. طبقة تعتيم متدرجة لضمان وضوح وقراءة النص باللون الأبيض -->
+      <div class="absolute inset-0 bg-gradient-to-l from-slate-950/90 via-slate-900/75 to-emerald-950/60"></div>
+
+      <!-- 3. نصوص البنر -->
+      <div class="relative z-10 max-w-xl">
+      
+        <h2 class="text-2xl md:text-4xl font-black mb-3 leading-tight text-white drop-shadow">
+          انضم إلى فرق تنظيم أضخم الفعاليات!
+        </h2>
+        <p class="text-slate-200 text-sm md:text-base leading-relaxed drop-shadow">
+          سجّل بياناتك لمرة واحدة فقط وسيتم حفظها لتسهيل تقديمك على جميع الفعاليات القادمة 
+        </p>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-black text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-sparkles text-amber-500"></i> الوظائف المعلنة حالياً
+      </h3>
+      <span id="jobs-count-badge" class="text-xs bg-slate-200 text-slate-700 font-bold px-3 py-1 rounded-full">0 وظائف</span>
+    </div>
+
+    <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="col-span-full py-20 text-center text-slate-400">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-emerald-600"></i>
+        <p>جاري تحميل الوظائف المتاحة...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- مودال التقديم -->
+  <div id="modal-apply" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+    <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+      <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div>
+          <h3 id="modal-job-title" class="font-extrabold text-lg text-slate-900">تقديم طلب</h3>
+          <p id="modal-job-meta" class="text-xs text-emerald-700 font-semibold mt-0.5"></p>
+        </div>
+        <button onclick="closeModal('modal-apply')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6">
+        <div class="bg-emerald-50/80 border border-emerald-100 p-4 rounded-2xl">
+          <h4 class="text-xs font-bold text-emerald-900 mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-emerald-600"></i> الوصف والمهام الوظيفية بالكامل:
+          </h4>
+          <p id="modal-job-desc" class="text-sm text-emerald-950 leading-relaxed"></p>
+        </div>
+
+        <form id="form-apply" onsubmit="handleApplicationSubmit(event)" class="space-y-4">
+          <input type="hidden" id="app-job-id" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الاسم الرباعي *</label>
+              <input type="text" id="app-name" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">البريد الإلكتروني *</label>
+              <input type="email" id="app-email" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">رقم الجوال *</label>
+              <input type="tel" id="app-phone" required dir="ltr" class="w-full text-right text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="05XXXXXXXX" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">رقم الهوية / الإقامة *</label>
+              <input type="text" id="app-id" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الجنس *</label>
+              <select id="app-gender" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                <option value="ذكر">ذكر</option>
+                <option value="أنثى">أنثى</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الجنسية *</label>
+              <select id="app-nationality" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"></select>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الميلاد *</label>
+              <input type="date" id="app-birth" required class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">مستوى اللغة الإنجليزية (من 5) *</label>
+            <div class="flex items-center gap-3 bg-slate-50 p-2.5 border border-slate-200 rounded-xl">
+              <input type="range" id="app-english" min="1" max="5" value="3" oninput="document.getElementById('eng-val').innerText = this.value + '/5'" class="w-full accent-emerald-600" />
+              <span id="eng-val" class="font-extrabold text-sm text-emerald-700 min-w-[36px]">3/5</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">الأعمال السابقة والخبرات الميدانية</label>
+            <textarea id="app-exp" rows="2" class="w-full text-sm p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="الفعاليات التي شاركت بها ومسؤولياتك..."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الصورة الشخصية *</label>
+              <input type="file" id="app-photo" accept="image/*" required class="w-full text-xs text-slate-500 file:ml-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">السيرة الذاتية (CV) *</label>
+              <input type="file" id="app-cv" accept=".pdf,.doc,.docx" required class="w-full text-xs text-slate-500 file:ml-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex gap-3">
+            <button type="submit" id="btn-submit-apply" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-200">
+              إرسال طلب التقديم
+            </button>
+            <button type="button" onclick="closeModal('modal-apply')" class="px-5 py-3 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-100">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- رسالة النجاح -->
+  <div id="modal-success" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="text-xl font-black text-slate-900 mb-2">تم التقديم بنجاح!</h3>
+      <p class="text-slate-600 text-sm leading-relaxed mb-6">
+        تم استلام طلبك، وسيتم التواصل معك في حال اختيارك لهذه الفعالية. نتمنى لك كل التوفيق!
+      </p>
+      <button onclick="closeModal('modal-success')" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl hover:bg-emerald-700 transition">
+        حسناً
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://bigisnpdoqxmpjwpbncv.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_6ZtAL8lRYdreWg4Xhn6zLA_7-PwGvPJ";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const ARAB_COUNTRIES = [
+      "المملكة العربية السعودية", "الإمارات العربية المتحدة", "الكويت", "قطر", "البحرين", "عمان",
+      "مصر", "الأردن", "العراق", "لبنان", "سوريا", "فلسطين", "اليمن", "السودان", "المغرب",
+      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي", "جزر القمر"
+    ];
+
+    let currentJobs = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const select = document.getElementById('app-nationality');
+      select.innerHTML = ARAB_COUNTRIES.map(c => `<option value="${c}">${c}</option>`).join('');
+      loadUserSavedData();
+      loadJobs();
+    });
+
+    async function loadJobs() {
+      const grid = document.getElementById('jobs-grid');
+      try {
+        const { data, error } = await supabaseClient
+          .from('jobs')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        currentJobs = data || [];
+        document.getElementById('jobs-count-badge').innerText = `${currentJobs.length} وظائف`;
+
+        if (currentJobs.length === 0) {
+          grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-bold">لا توجد وظائف معلنة حالياً.</div>`;
+          return;
+        }
+
+        grid.innerHTML = currentJobs.map(job => `
+          <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
+            <div class="h-44 w-full relative overflow-hidden bg-slate-100">
+              <img src="${job.image_url || 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg6TOYhCvdezJ9RkSJIhfmCo7RkziccHfs8zz6Y2WSbUM9WBr5QOP_miAyxs2IbDI5wz13byLrdhiebauWJhfbVr_yy_NnNeFiQBh9Iho2TSxTN4_apLY31OTB_e2xXZv4tmZ2uOzrFCSERu2FrnJ8DjS-3VK5lciA33_p9jNuAwMS3LXXdI3Qj5gAz9buw/s1408/Gemini_Generated_Image_bk451ebk451ebk45.jfif'}" alt="${job.title}" class="w-full h-full object-cover">
+              <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-black text-slate-800 flex items-center gap-1 shadow-sm">
+                <i class="fa-solid fa-location-dot text-emerald-600"></i> ${job.city}
+              </div>
+            </div>
+            
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <h4 class="font-black text-slate-900 text-lg mb-2">${job.title}</h4>
+                <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-4">${job.description}</p>
+                
+                <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-4 text-xs">
+                  <div>
+                    <span class="text-slate-400 block mb-0.5">الفترة:</span>
+                    <span class="font-bold text-slate-700">${job.start_date} إلى ${job.end_date}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block mb-0.5">الأجر اليومي:</span>
+                    <span class="font-black text-emerald-600 text-sm">${job.daily_wage} ريال</span>
+                  </div>
+                </div>
+              </div>
+
+              <button onclick="openApplyModal('${job.id}')" class="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                <span>تقديم الآن</span>
+                <i class="fa-solid fa-arrow-left text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        grid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">خطأ في التحميل: ${err.message}</div>`;
+      }
+    }
+
+    function openApplyModal(jobId) {
+      const job = currentJobs.find(j => j.id === jobId);
+      if (!job) return;
+      document.getElementById('app-job-id').value = job.id;
+      document.getElementById('modal-job-title').innerText = job.title;
+      document.getElementById('modal-job-meta').innerText = `${job.city} | الأجر: ${job.daily_wage} ريال/يومي | من ${job.start_date} إلى ${job.end_date}`;
+      document.getElementById('modal-job-desc').innerText = job.description;
+      loadUserSavedData();
+      openModal('modal-apply');
+    }
+
+    function saveUserDataLocally(data) {
+      localStorage.setItem('applicant_profile_v2', JSON.stringify({
+        full_name: data.full_name,
+        email: data.email,
+        phone: data.phone,
+        national_id: data.national_id,
+        gender: data.gender,
+        nationality: data.nationality,
+        birth_date: data.birth_date,
+        english_level: data.english_level,
+        experience: data.experience
+      }));
+    }
+
+    function loadUserSavedData() {
+      const saved = localStorage.getItem('applicant_profile_v2');
+      if (!saved) return;
+      try {
+        const d = JSON.parse(saved);
+        if(d.full_name) document.getElementById('app-name').value = d.full_name;
+        if(d.email) document.getElementById('app-email').value = d.email;
+        if(d.phone) document.getElementById('app-phone').value = d.phone;
+        if(d.national_id) document.getElementById('app-id').value = d.national_id;
+        if(d.gender) document.getElementById('app-gender').value = d.gender;
+        if(d.nationality) document.getElementById('app-nationality').value = d.nationality;
+        if(d.birth_date) document.getElementById('app-birth').value = d.birth_date;
+        if(d.english_level) {
+          document.getElementById('app-english').value = d.english_level;
+          document.getElementById('eng-val').innerText = d.english_level + '/5';
+        }
+        if(d.experience) document.getElementById('app-exp').value = d.experience;
+      } catch(e) {}
+    }
+
+    async function uploadFile(file, folder) {
+      const ext = file.name.split('.').pop();
+      const path = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2)}.${ext}`;
+      const { error } = await supabaseClient.storage.from('resumes').upload(path, file);
+      if (error) throw error;
+      const { data } = supabaseClient.storage.from('resumes').getPublicUrl(path);
+      return data.publicUrl;
+    }
+
+    async function handleApplicationSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit-apply');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ الطلب...`;
+
+      try {
+        const photoFile = document.getElementById('app-photo').files[0];
+        const cvFile = document.getElementById('app-cv').files[0];
+
+        const [photoUrl, cvUrl] = await Promise.all([
+          uploadFile(photoFile, 'photos'),
+          uploadFile(cvFile, 'cvs')
+        ]);
+
+        const appData = {
+          job_id: document.getElementById('app-job-id').value,
+          full_name: document.getElementById('app-name').value.trim(),
+          email: document.getElementById('app-email').value.trim(),
+          phone: document.getElementById('app-phone').value.trim(),
+          national_id: document.getElementById('app-id').value.trim(),
+          gender: document.getElementById('app-gender').value,
+          nationality: document.getElementById('app-nationality').value,
+          birth_date: document.getElementById('app-birth').value,
+          english_level: parseInt(document.getElementById('app-english').value),
+          experience: document.getElementById('app-exp').value.trim(),
+          photo_url: photoUrl,
+          cv_url: cvUrl
+        };
+
+        const { error } = await supabaseClient.from('applications').insert([appData]);
+        if (error) throw error;
+
+        saveUserDataLocally(appData);
+        closeModal('modal-apply');
+        openModal('modal-success');
+      } catch (err) {
+        alert("تعذر التقديم: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  </script>
+</body>
+</html>
