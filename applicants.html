@@ -1,148 +1,94 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="scroll-smooth">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>متقدمي الفعالية | لوحة الفرز والاختيار</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>متقدمي الفعالية | لوحة الفرز</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-  
-  <style>
-    html, body {
-      overflow-x: hidden;
-    }
-    body { font-family: 'Tajawal', sans-serif; }
-    .glass-pill {
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(10px);
-    }
-    /* تحسين إمكانية النقر باللمس على الجوال */
-    button, a, select, input {
-      touch-action: manipulation;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Tajawal', sans-serif; }</style>
 </head>
-<body class="bg-slate-100/80 text-slate-800 min-h-screen flex flex-col selection:bg-emerald-600 selection:text-white">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- شريط علوي متجاوب بالكامل -->
-  <header class="bg-white/95 sticky top-0 z-40 border-b border-slate-200/80 shadow-xs backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-3.5 sm:px-4 py-3 flex justify-between items-center gap-2">
-      
-      <div class="flex items-center gap-2.5 min-w-0">
-        <a href="index.html" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition text-xs" title="الرجوع للرئيسية">
-          <i class="fa-solid fa-arrow-right"></i>
-        </a>
-        <div class="min-w-0">
-          <span class="text-[9px] sm:text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 inline-block">لوحة الفرز</span>
-          <h1 id="event-title" class="font-black text-slate-900 text-xs sm:text-base md:text-lg truncate mt-0.5">جاري التحميل...</h1>
+  <!-- شريط علوي -->
+  <header class="bg-white sticky top-0 z-40 border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        
+        <div>
+          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">لوحة الاختيار والفرز</span>
+          <h1 id="event-title" class="font-black text-slate-900 text-base md:text-lg">جاري جلب الفعالية...</h1>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <span id="filtered-count" class="text-[11px] sm:text-xs font-black bg-slate-100 text-slate-700 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-200">
-          0 متقدمين
-        </span>
-        <button onclick="loadApplicants()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center transition" title="تحديث القائمة">
+      <div class="flex items-center gap-2">
+        <span id="filtered-count" class="text-xs font-extrabold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl">0 متقدمين</span>
+        <button onclick="loadApplicants()" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center">
           <i class="fa-solid fa-rotate-right text-xs"></i>
         </button>
       </div>
-
     </div>
   </header>
 
-  <!-- المحتوى الرئيسي -->
-  <main class="max-w-7xl mx-auto w-full p-3.5 sm:p-6 flex-1 space-y-4 sm:space-y-6">
-
-    <!-- صندوق الفلاتر مع زر طي ذكي على الجوال -->
-    <div class="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-xs space-y-3">
-      
-      <!-- هيدر الفلاتر -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2 font-black text-xs sm:text-sm text-slate-800">
-          <i class="fa-solid fa-sliders text-emerald-600"></i>
-          <span>خيارات الفرز</span>
-        </div>
-        
-        <div class="flex items-center gap-2">
-          <!-- زر إظهار/إخفاء الفلاتر على الجوال فقط -->
-          <button onclick="toggleMobileFilters()" class="md:hidden text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 flex items-center gap-1">
-            <span id="filter-toggle-text">إظهار الفلاتر</span>
-            <i id="filter-toggle-icon" class="fa-solid fa-chevron-down text-[9px]"></i>
-          </button>
-
-          <button onclick="resetFilters()" class="text-[11px] sm:text-xs text-rose-600 hover:underline font-bold transition">
-            إعادة تعيين
-          </button>
-        </div>
+  <main class="max-w-7xl mx-auto w-full p-4 md:p-6 flex-1">
+    <!-- صندوق الفلاتر الذكية المتعددة -->
+    <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm mb-6">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <span class="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-emerald-600"></i> خيارات الفرز والفلترة
+        </span>
+        <button onclick="resetFilters()" class="text-xs text-rose-600 hover:underline font-bold">إعادة تعيين</button>
       </div>
 
-      <!-- حقل البحث المباشر (ظاهر دائماً) -->
-      <div class="relative">
-        <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
-        <input 
-          type="text" 
-          id="filter-search" 
-          oninput="applyFilters()" 
-          placeholder="بحث بالاسم، رقم الهوية، أو الجوال..." 
-          class="w-full pr-9 pl-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none transition"
-        />
-      </div>
-
-      <!-- قائمة الفلاتر التفصيلية (قابلة للطي على الجوال لتوفير المساحة) -->
-      <div id="filters-container" class="hidden md:grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 text-xs pt-2 border-t border-slate-100">
-        <!-- الجنس -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+        <!-- فلتر الجنس -->
         <div>
           <label class="block font-bold text-slate-600 mb-1">الجنس</label>
-          <select id="filter-gender" onchange="applyFilters()" class="w-full p-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none">
+          <select id="filter-gender" onchange="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white">
             <option value="ALL">الكل (ذكور وإناث)</option>
             <option value="ذكر">ذكور فقط</option>
             <option value="أنثى">إناث فقط</option>
           </select>
         </div>
 
-        <!-- الجنسية -->
+        <!-- فلتر الجنسية -->
         <div>
           <label class="block font-bold text-slate-600 mb-1">الجنسية</label>
-          <select id="filter-nationality" onchange="applyFilters()" class="w-full p-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none">
+          <select id="filter-nationality" onchange="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white">
             <option value="ALL">جميع الجنسيات</option>
             <option value="SAUDI">سعوديون فقط</option>
             <option value="NON_SAUDI">غير سعوديين (الكل)</option>
           </select>
         </div>
 
-        <!-- العمر من -->
+        <!-- فلتر العمر الأدنى والأعلى -->
         <div>
           <label class="block font-bold text-slate-600 mb-1">العمر من</label>
-          <input type="number" id="filter-min-age" min="15" max="70" placeholder="18" oninput="applyFilters()" class="w-full p-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none" />
+          <input type="number" id="filter-min-age" min="15" max="70" placeholder="مثال: 18" oninput="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white" />
         </div>
-
-        <!-- العمر إلى -->
         <div>
           <label class="block font-bold text-slate-600 mb-1">العمر إلى</label>
-          <input type="number" id="filter-max-age" min="15" max="70" placeholder="30" oninput="applyFilters()" class="w-full p-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none" />
+          <input type="number" id="filter-max-age" min="15" max="70" placeholder="مثال: 30" oninput="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white" />
         </div>
 
-        <!-- الحالة -->
+        <!-- فلتر حالة التواصل والحفظ -->
         <div>
           <label class="block font-bold text-slate-600 mb-1">حالة المتابعة</label>
-          <select id="filter-status" onchange="applyFilters()" class="w-full p-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-none">
+          <select id="filter-status" onchange="applyFilters()" class="w-full p-2.5 border rounded-xl bg-slate-50 focus:bg-white">
             <option value="ALL">الكل</option>
-            <option value="BOOKMARKED">⭐ المميزين بنجمة</option>
-            <option value="CONTACTED">✅ تم التواصل</option>
-            <option value="NOT_CONTACTED">⏳ بانتظار التواصل</option>
+            <option value="CONTACTED">تم التواصل معهم فقط</option>
+            <option value="NOT_CONTACTED">لم يتم التواصل بعد</option>
+            <option value="BOOKMARKED">المميزين بنجمة (المحفوظين)</option>
           </select>
         </div>
       </div>
-
     </div>
 
-    <!-- شبكة بطاقات المتقدمين -->
-    <div id="applicants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-      <!-- يتم حقن البطاقات ديناميكياً -->
+    <!-- شبكة بطاقات المتقدمين بتصميمها الجديد -->
+    <div id="applicants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- تحميل البطاقات -->
     </div>
   </main>
 
@@ -160,13 +106,12 @@
     const ARAB_COUNTRIES = [
       "المملكة العربية السعودية", "الإمارات العربية المتحدة", "الكويت", "قطر", "البحرين", "عمان",
       "مصر", "الأردن", "العراق", "لبنان", "سوريا", "فلسطين", "اليمن", "السودان", "المغرب",
-      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي", "افغانستان", "باكستان", 
-      "تشاد", "نيجيريا", "النيجر", "مالي", "بوريكانافاسو", "الهند", "بنغلاديش", "جزر القمر"
+      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي", "جزر القمر"
     ];
 
     window.addEventListener('DOMContentLoaded', () => {
       if (!JOB_ID) {
-        alert("لم يتم تحديد الفعالية المطلوبة.");
+        alert("لم يتم تحديد الفعالية ");
         window.location.href = 'index.html';
         return;
       }
@@ -174,31 +119,13 @@
       loadApplicants();
     });
 
-    // إظهار/إخفاء الفلاتر على الجوال
-    function toggleMobileFilters() {
-      const box = document.getElementById('filters-container');
-      const text = document.getElementById('filter-toggle-text');
-      const icon = document.getElementById('filter-toggle-icon');
-
-      const isHidden = box.classList.contains('hidden');
-      if (isHidden) {
-        box.classList.remove('hidden');
-        text.innerText = 'إخفاء الفلاتر';
-        icon.className = 'fa-solid fa-chevron-up text-[9px]';
-      } else {
-        box.classList.add('hidden');
-        text.innerText = 'إظهار الفلاتر';
-        icon.className = 'fa-solid fa-chevron-down text-[9px]';
-      }
-    }
-
     function populateNationalityFilter() {
       const select = document.getElementById('filter-nationality');
-      ARAB_COUNTRIES.forEach(country => {
-        if (country !== "المملكة العربية السعودية") {
+      ARAB_COUNTRIES.forEach(c => {
+        if(c !== "المملكة العربية السعودية") {
           const opt = document.createElement('option');
-          opt.value = country;
-          opt.textContent = country;
+          opt.value = c;
+          opt.textContent = c;
           select.appendChild(opt);
         }
       });
@@ -206,27 +133,20 @@
 
     async function loadApplicants() {
       const grid = document.getElementById('applicants-grid');
-      grid.innerHTML = `
-        <div class="col-span-full text-center py-20 bg-white rounded-3xl border border-slate-200">
-          <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-emerald-600"></i>
-          <p class="text-slate-500 font-bold text-xs">جاري جلب بيانات المتقدمين...</p>
-        </div>
-      `;
+      grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-3xl mb-2 text-emerald-600"></i><p>جاري تحميل المتقدمين...</p></div>`;
 
+      // 1. جلب اسم الفعالية
       const { data: job } = await supabaseClient.from('jobs').select('*').eq('id', JOB_ID).single();
       if (job) {
         jobDetails = job;
-        document.getElementById('event-title').innerText = `${job.title} — ${job.city}`;
+        document.getElementById('event-title').innerText = `${job.title} (${job.city})`;
       }
 
-      const { data, error } = await supabaseClient
-        .from('applications')
-        .select('*')
-        .eq('job_id', JOB_ID)
-        .order('created_at', { ascending: false });
+      // 2. جلب المتقدمين
+      const { data, error } = await supabaseClient.from('applications').select('*').eq('job_id', JOB_ID).order('created_at', { ascending: false });
 
       if (error) {
-        grid.innerHTML = `<div class="col-span-full text-center text-rose-600 py-10 font-bold bg-white rounded-2xl">${error.message}</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">${error.message}</div>`;
         return;
       }
 
@@ -235,17 +155,15 @@
     }
 
     function calculateAge(birthDateString) {
-      if (!birthDateString) return 0;
       const birth = new Date(birthDateString);
       const now = new Date();
       let age = now.getFullYear() - birth.getFullYear();
       const m = now.getMonth() - birth.getMonth();
       if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
-      return isNaN(age) ? 0 : age;
+      return age;
     }
 
     function applyFilters() {
-      const search = (document.getElementById('filter-search').value || '').trim().toLowerCase();
       const gender = document.getElementById('filter-gender').value;
       const nationality = document.getElementById('filter-nationality').value;
       const minAge = parseInt(document.getElementById('filter-min-age').value) || 0;
@@ -253,22 +171,19 @@
       const status = document.getElementById('filter-status').value;
 
       const filtered = allApplicants.filter(app => {
-        if (search) {
-          const matchName = app.full_name?.toLowerCase().includes(search);
-          const matchId = app.national_id?.toLowerCase().includes(search);
-          const matchPhone = app.phone?.toLowerCase().includes(search);
-          if (!matchName && !matchId && !matchPhone) return false;
-        }
-
+        // فلتر الجنس
         if (gender !== 'ALL' && app.gender !== gender) return false;
 
+        // فلتر الجنسية
         if (nationality === 'SAUDI' && app.nationality !== 'المملكة العربية السعودية') return false;
         if (nationality === 'NON_SAUDI' && app.nationality === 'المملكة العربية السعودية') return false;
         if (nationality !== 'ALL' && nationality !== 'SAUDI' && nationality !== 'NON_SAUDI' && app.nationality !== nationality) return false;
 
+        // فلتر العمر
         const age = calculateAge(app.birth_date);
         if (age < minAge || age > maxAge) return false;
 
+        // فلتر الحالة
         if (status === 'CONTACTED' && !app.is_contacted) return false;
         if (status === 'NOT_CONTACTED' && app.is_contacted) return false;
         if (status === 'BOOKMARKED' && !app.is_bookmarked) return false;
@@ -281,7 +196,6 @@
     }
 
     function resetFilters() {
-      document.getElementById('filter-search').value = '';
       document.getElementById('filter-gender').value = 'ALL';
       document.getElementById('filter-nationality').value = 'ALL';
       document.getElementById('filter-min-age').value = '';
@@ -290,213 +204,125 @@
       applyFilters();
     }
 
-    function toggleExperience(id) {
-      const textEl = document.getElementById(`exp-text-${id}`);
-      const btnEl = document.getElementById(`exp-btn-${id}`);
-      if (!textEl || !btnEl) return;
-
-      const isClamped = textEl.classList.contains('line-clamp-2');
-      if (isClamped) {
-        textEl.classList.remove('line-clamp-2');
-        btnEl.innerHTML = `<span>عرض أقل</span> <i class="fa-solid fa-chevron-up text-[9px] mr-1"></i>`;
-      } else {
-        textEl.classList.add('line-clamp-2');
-        btnEl.innerHTML = `<span>قراءة المزيد</span> <i class="fa-solid fa-chevron-down text-[9px] mr-1"></i>`;
-      }
-    }
-
+    // ==================== التصميم الاحترافي الجديد للبطاقة ==================== //
     function renderCards(list) {
       const grid = document.getElementById('applicants-grid');
       if (list.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200">
-            <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto mb-2 text-lg">
-              <i class="fa-solid fa-user-slash"></i>
-            </div>
-            <h4 class="font-extrabold text-slate-800 text-xs sm:text-sm">لا توجد نتائج مطابقة</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">جرّب تغيير خيارات البحث أو التصفية.</p>
-          </div>
-        `;
+        grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-400 font-bold">لا يوجد أي متقدمين يطابقون خيارات الفرز.</div>`;
         return;
       }
 
       grid.innerHTML = list.map(app => {
         const age = calculateAge(app.birth_date);
-        const cleanPhone = (app.phone || '').replace(/[^0-9]/g, '');
+        const cleanPhone = app.phone.replace(/[^0-9]/g, '');
         const intlPhone = cleanPhone.startsWith('0') ? '966' + cleanPhone.substring(1) : cleanPhone;
-        const msg = encodeURIComponent(`مرحباً ${app.full_name}، نتواصل معك بخصوص تقديمك على وظيفة "${jobDetails ? jobDetails.title : 'الفعالية'}". نود التنسيق معك بخصوص المقابلة والخطوات القادمة.`);
-        
-        const photoUrl = app.photo_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-        const isLongExp = (app.experience || '').trim().length > 60;
+        const msg = encodeURIComponent(`مرحباً أخي/أختي ${app.full_name}، نتواصل معك بخصوص تقديمك على وظيفة "${jobDetails ? jobDetails.title : 'الفعالية'}". نود التنسيق معك بخصوص المقابلة والخطوات القادمة.`);
 
         return `
-          <div class="bg-white rounded-3xl border ${app.is_contacted ? 'border-emerald-300 ring-2 ring-emerald-100' : 'border-slate-200'} overflow-hidden shadow-xs hover:shadow-md transition flex flex-col justify-between">
+          <div class="bg-white rounded-3xl border ${app.is_contacted ? 'border-emerald-300 ring-2 ring-emerald-100' : 'border-slate-200'} p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition relative">
             
+            <!-- أزرار الإجراءات السريعة في زاوية البطاقة (نجمة الحفظ + زر علامة التواصل) -->
+            <div class="absolute top-4 left-4 flex items-center gap-1.5 z-10">
+              <!-- علامة الحفظ / المفاضلة -->
+              <button onclick="toggleBookmark('${app.id}', ${app.is_bookmarked})" title="حفظ للمفاضلة" class="w-8 h-8 rounded-full flex items-center justify-center transition ${app.is_bookmarked ? 'bg-amber-100 text-amber-500' : 'bg-slate-100 text-slate-400 hover:text-amber-500'}">
+                <i class="fa-solid fa-star text-xs"></i>
+              </button>
+              
+              <!-- علامة تم التواصل -->
+              <button onclick="toggleContacted('${app.id}', ${app.is_contacted})" title="تحديد كتم التواصل" class="px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 transition ${app.is_contacted ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-700'}">
+                <i class="fa-solid fa-check text-[10px]"></i>
+                <span>${app.is_contacted ? 'تم التواصل' : 'لم يُتواصل'}</span>
+              </button>
+            </div>
+
+            <!-- الجزء العلوي: الصورة والاسم الكامل فقط -->
             <div>
-              <!-- خلفية علوية سينمائية مع أزرار عائمة -->
-              <div class="relative h-24 sm:h-28 w-full overflow-hidden bg-slate-900">
-                <img src="${photoUrl}" class="w-full h-full object-cover blur-sm scale-110 opacity-40" alt="Background" />
-                <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-white"></div>
-
-                <!-- أزرار الإجراء السريع العائمة -->
-                <div class="absolute top-2.5 left-3 right-3 flex justify-between items-center z-10">
-                  <button 
-                    onclick="toggleBookmark('${app.id}', ${app.is_bookmarked})" 
-                    title="حفظ للمفاضلة" 
-                    class="w-8 h-8 rounded-full glass-pill border border-white/60 flex items-center justify-center transition shadow-xs ${app.is_bookmarked ? 'text-amber-500 bg-amber-50' : 'text-slate-500 hover:text-amber-500'}">
-                    <i class="fa-${app.is_bookmarked ? 'solid' : 'regular'} fa-star text-xs"></i>
-                  </button>
-
-                  <button 
-                    onclick="toggleContacted('${app.id}', ${app.is_contacted})" 
-                    class="glass-pill px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-black border border-white/60 flex items-center gap-1 transition shadow-xs ${app.is_contacted ? 'bg-emerald-600 text-white border-emerald-600' : 'text-slate-700'}">
-                    <i class="fa-solid fa-check text-[9px]"></i>
-                    <span>${app.is_contacted ? 'تم التواصل' : 'لم يُتواصل'}</span>
-                  </button>
+              <div class="flex items-center gap-4 mb-4 pt-1">
+                <div class="relative">
+                  <img src="${app.photo_url || 'https://via.placeholder.com/150'}" class="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-500 shadow-sm" alt="${app.full_name}">
+                  <span class="absolute -bottom-1 -left-1 text-[10px] font-bold px-1.5 py-0.2 rounded-md ${app.gender === 'ذكر' ? 'bg-blue-600 text-white' : 'bg-pink-600 text-white'}">
+                    ${app.gender || 'ذكر'}
+                  </span>
+                </div>
+                <div>
+                  <h3 class="font-black text-slate-900 text-base leading-snug">${app.full_name}</h3>
+                  <p class="text-[11px] text-slate-400 mt-0.5">${app.email}</p>
                 </div>
               </div>
 
-              <!-- الصورة والاسم -->
-              <div class="px-4 -mt-12 sm:-mt-14 relative z-10 text-center pb-2">
-                <div class="relative inline-block mx-auto mb-1.5">
-                  <img 
-                    src="${photoUrl}" 
-                    alt="${app.full_name}" 
-                    class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-4 border-white shadow-md bg-white mx-auto ring-1 ring-slate-100"
-                  />
-                  <span class="absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs ${app.gender === 'ذكر' ? 'bg-blue-600 text-white' : 'bg-pink-600 text-white'}">
+              <!-- المربع المطور بالأسفل: (الجنسية والعمر والجنس بالأعلى) ثم (رقم الهوية والإنجليزي) -->
+              <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 mb-4 text-xs space-y-2.5">
+                <!-- الصف الأول: الجنسية + العمر + الجنس -->
+                <div class="flex flex-wrap items-center gap-2 pb-2.5 border-b border-slate-200/70">
+                  <span class="bg-white border border-slate-200 text-slate-800 font-extrabold px-2.5 py-1 rounded-lg">
+                    <i class="fa-solid fa-globe text-emerald-600 ml-1"></i> ${app.nationality}
+                  </span>
+                  <span class="bg-white border border-slate-200 text-slate-700 font-bold px-2 py-1 rounded-lg">
+                    العمر: ${age} سنة
+                  </span>
+                  <span class="bg-white border border-slate-200 text-slate-700 font-bold px-2 py-1 rounded-lg">
                     ${app.gender || 'ذكر'}
                   </span>
                 </div>
 
-                <h3 class="font-black text-slate-900 text-sm sm:text-base leading-snug">${app.full_name}</h3>
-                <p class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate font-mono">${app.email || 'لا يوجد إيميل'}</p>
-              </div>
-
-              <!-- تفاصيل المرشح -->
-              <div class="px-4 space-y-2.5">
-                
-                <!-- الوسوم -->
-                <div class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
-                  <span class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-lg">
-                    <i class="fa-solid fa-globe text-emerald-600 text-[9px]"></i>
-                    ${app.nationality || 'غير محدد'}
-                  </span>
-
-                  <span class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-lg">
-                    ${age > 0 ? age + ' سنة' : 'غير محدد'}
-                  </span>
-
-                  <span class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-lg">
-                    <i class="fa-solid fa-id-card text-slate-400 text-[9px]"></i>
-                    ${app.national_id || '—'}
-                  </span>
-                </div>
-
-                <!-- الإنجليزية -->
-                <div class="bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-between text-xs">
-                  <span class="text-slate-500 text-[10px] sm:text-[11px] font-bold">مستوى الإنجليزية:</span>
-                  <div class="flex items-center gap-1">
-                    <div class="flex text-amber-400 text-[10px] gap-0.5">
-                      ${Array.from({length: 5}, (_, i) => `
-                        <i class="fa-solid fa-star ${i < (app.english_level || 0) ? 'text-amber-400' : 'text-slate-200'}"></i>
-                      `).join('')}
-                    </div>
-                    <span class="font-bold text-slate-700 text-[10px]">(${app.english_level || 1}/5)</span>
+                <!-- الصف الثاني: رقم الهوية + مستوى الإنجليزية -->
+                <div class="grid grid-cols-2 gap-2 text-slate-600 pt-0.5">
+                  <div>
+                    <span class="text-slate-400 block text-[10px]">رقم الهوية / الإقامة:</span>
+                    <span class="font-mono font-bold text-slate-900 text-xs">${app.national_id}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block text-[10px]">مستوى الإنجليزية:</span>
+                    <span class="font-extrabold text-amber-500">${'★'.repeat(app.english_level || 1)} <span class="text-slate-700">(${app.english_level}/5)</span></span>
                   </div>
                 </div>
 
-                <!-- الخبرات مع قراءة المزيد -->
-                <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-xs">
-                  <div class="text-slate-400 font-bold text-[10px] mb-1 flex items-center gap-1">
-                    <i class="fa-solid fa-briefcase text-emerald-600"></i>
-                    <span>الأعمال السابقة:</span>
+                <!-- الخبرات -->
+                ${app.experience ? `
+                  <div class="pt-2 border-t border-slate-200/70">
+                    <span class="text-slate-400 block text-[10px] mb-0.5">الخبرات والأعمال السابقة:</span>
+                    <p class="text-slate-700 text-[11px] leading-relaxed line-clamp-2">${app.experience}</p>
                   </div>
-
-                  ${app.experience ? `
-                    <p id="exp-text-${app.id}" class="text-slate-700 text-[11px] sm:text-xs leading-relaxed ${isLongExp ? 'line-clamp-2' : ''} whitespace-pre-line">
-                      ${app.experience}
-                    </p>
-                    ${isLongExp ? `
-                      <button 
-                        id="exp-btn-${app.id}" 
-                        onclick="toggleExperience('${app.id}')" 
-                        class="text-emerald-700 hover:text-emerald-800 font-black text-[10px] mt-1 flex items-center gap-0.5">
-                        <span>قراءة المزيد</span>
-                        <i class="fa-solid fa-chevron-down text-[8px]"></i>
-                      </button>
-                    ` : ''}
-                  ` : `
-                    <p class="text-slate-400 text-[10px] italic">لا توجد أعمال سابقة مسجلة.</p>
-                  `}
-                </div>
-
+                ` : ''}
               </div>
             </div>
 
-            <!-- الجزء السفلي: السيرة وأزرار الاتصال -->
-            <div class="p-4 pt-2.5 space-y-2 mt-2 border-t border-slate-100">
-              
-              <!-- السيرة الذاتية والصورة -->
-              <div class="flex gap-1.5">
+            <!-- الجزء السفلي: روابط الملفات وأزرار التواصل المباشر مع التحديث التلقائي -->
+            <div>
+              <div class="flex gap-2 mb-3">
                 ${app.cv_url ? `
-                  <a href="${app.cv_url}" target="_blank" class="flex-1 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-[11px] sm:text-xs text-center flex items-center justify-center gap-1.5 transition">
-                    <i class="fa-solid fa-file-pdf text-rose-500"></i>
-                    <span>فتح السيرة الذاتية (CV)</span>
+                  <a href="${app.cv_url}" target="_blank" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs text-center flex items-center justify-center gap-1.5 transition">
+                    <i class="fa-solid fa-file-pdf text-rose-500"></i> فتح السيرة الذاتية
                   </a>
-                ` : `
-                  <span class="flex-1 py-2 px-2 bg-slate-50 text-slate-300 font-bold rounded-xl text-[11px] text-center border border-dashed border-slate-200">
-                    لا يوجد ملف CV
-                  </span>
-                `}
-
+                ` : ''}
                 ${app.photo_url ? `
-                  <a href="${app.photo_url}" target="_blank" class="w-10 h-10 shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center transition" title="عرض الصورة بالحجم الكامل">
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                  <a href="${app.photo_url}" target="_blank" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center justify-center transition" title="عرض الصورة بالحجم الكامل">
+                    <i class="fa-solid fa-image text-emerald-600"></i>
                   </a>
                 ` : ''}
               </div>
 
-              <!-- أزرار التواصل المباشر السريعة -->
-              <div class="grid grid-cols-3 gap-1.5">
-                <a 
-                  href="https://wa.me/${intlPhone}?text=${msg}" 
-                  target="_blank" 
-                  onclick="markAsContactedQuick('${app.id}')" 
-                  class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-center font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition">
-                  <i class="fa-brands fa-whatsapp text-xs sm:text-sm"></i>
-                  <span>واتساب</span>
+              <!-- أزرار التواصل المباشر السريع -->
+              <div class="grid grid-cols-3 gap-2">
+                <a href="https://wa.me/${intlPhone}?text=${msg}" target="_blank" onclick="markAsContactedQuick('${app.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition">
+                  <i class="fa-brands fa-whatsapp text-sm"></i> واتساب
                 </a>
-
-                <a 
-                  href="mailto:${app.email}?subject=بخصوص التقديم على ${encodeURIComponent(jobDetails ? jobDetails.title : 'الفعالية')}&body=${msg}" 
-                  onclick="markAsContactedQuick('${app.id}')" 
-                  class="bg-sky-600 hover:bg-sky-700 text-white py-2 rounded-xl text-center font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition">
-                  <i class="fa-solid fa-envelope text-[10px] sm:text-xs"></i>
-                  <span>إيميل</span>
+                <a href="mailto:${app.email}?subject=بخصوص فعالية ${encodeURIComponent(jobDetails ? jobDetails.title : '')}&body=${msg}" onclick="markAsContactedQuick('${app.id}')" class="bg-sky-600 hover:bg-sky-700 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition">
+                  <i class="fa-solid fa-envelope text-xs"></i> إيميل
                 </a>
-
-                <a 
-                  href="tel:${app.phone}" 
-                  onclick="markAsContactedQuick('${app.id}')" 
-                  class="bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-center font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1 transition">
-                  <i class="fa-solid fa-phone text-[10px] sm:text-xs"></i>
-                  <span>اتصال</span>
+                <a href="tel:${app.phone}" onclick="markAsContactedQuick('${app.id}')" class="bg-slate-900 hover:bg-slate-800 text-white py-2 rounded-xl text-center font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition">
+                  <i class="fa-solid fa-phone text-xs"></i> اتصال
                 </a>
               </div>
             </div>
-
           </div>
         `;
       }).join('');
     }
 
+    // تبديل حالة الحفظ (Bookmark)
     async function toggleBookmark(id, current) {
-      const { error } = await supabaseClient
-        .from('applications')
-        .update({ is_bookmarked: !current })
-        .eq('id', id);
-
+      const { error } = await supabaseClient.from('applications').update({ is_bookmarked: !current }).eq('id', id);
       if (!error) {
         const item = allApplicants.find(a => a.id === id);
         if (item) item.is_bookmarked = !current;
@@ -504,12 +330,9 @@
       }
     }
 
+    // تبديل حالة تم التواصل
     async function toggleContacted(id, current) {
-      const { error } = await supabaseClient
-        .from('applications')
-        .update({ is_contacted: !current })
-        .eq('id', id);
-
+      const { error } = await supabaseClient.from('applications').update({ is_contacted: !current }).eq('id', id);
       if (!error) {
         const item = allApplicants.find(a => a.id === id);
         if (item) item.is_contacted = !current;
@@ -517,6 +340,7 @@
       }
     }
 
+    // تحديث تلقائي للحالة عند الضغط على أزرار الاتصال/الواتساب
     async function markAsContactedQuick(id) {
       const item = allApplicants.find(a => a.id === id);
       if (item && !item.is_contacted) {
