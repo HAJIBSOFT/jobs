@@ -12,108 +12,197 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
 
-  <header class="bg-slate-900 text-white sticky top-0 z-40 border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 class="font-extrabold text-base leading-tight">لوحة التحكم </h1>
-          <p class="text-[11px] text-slate-400">إدارة وظائف المواسم والفعاليات</p>
-        </div>
+  <!-- ==================== شاشة تسجيل الدخول بكلمة المرور ==================== -->
+  <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-800 text-center">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+        <i class="fa-solid fa-lock"></i>
       </div>
-      <button onclick="openModal('modal-add-job')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition shadow">
-        <i class="fa-solid fa-plus"></i> إضافة فعالية جديدة
-      </button>
-    </div>
-  </header>
+      <h2 class="text-2xl font-black text-slate-900 mb-1">تسجيل دخول الإدارة</h2>
+      <p class="text-xs text-slate-500 mb-6">يرجى إدخال كلمة المرور للوصول إلى لوحة التحكم</p>
 
-  <main class="max-w-7xl mx-auto p-4 md:p-8">
-    <div class="flex justify-between items-center mb-6">
-      <div>
-        <h2 class="text-2xl font-black text-slate-900">قائمة الفعاليات المجدولة</h2>
-        <p class="text-xs text-slate-500 mt-0.5">يمكنك تعطيل ظهور أي فعالية أو فتح الرابط المنفصل لمراجعة متقدميها</p>
-      </div>
-      <button onclick="loadAdminJobs()" class="bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-        <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
-      </button>
-    </div>
-
-    <!-- جدول الفعاليات -->
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-right text-xs md:text-sm">
-          <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-            <tr>
-              <th class="p-4">الفعالية والوظيفة</th>
-              <th class="p-4">المدينة</th>
-              <th class="p-4">الفترة</th>
-              <th class="p-4">الأجر اليومي</th>
-              <th class="p-4">الظهور بالموقع</th>
-              <th class="p-4 text-center">المتقدمين والرابط المباشر</th>
-            </tr>
-          </thead>
-          <tbody id="admin-jobs-tbody" class="divide-y divide-slate-100">
-            <tr><td colspan="6" class="p-8 text-center text-slate-400">جاري جلب الفعاليات...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <!-- مودال إضافة فعالية جديدة -->
-  <div id="modal-add-job" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
-    <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl my-auto">
-      <div class="flex justify-between items-center mb-4 border-b pb-3">
-        <h3 class="font-extrabold text-lg text-slate-900">إضافة فعالية جديدة</h3>
-        <button onclick="closeModal('modal-add-job')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-
-      <form onsubmit="handleAddJob(event)" class="space-y-3 text-xs">
+      <form onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">اسم الوظيفة / الفعالية *</label>
-          <input type="text" id="job-title" required class="w-full p-2.5 border rounded-xl" placeholder="مثال: مسؤول تنظيم البوابات - موسم الدرعية" />
-        </div>
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">رابط صورة الفعالية</label>
-          <input type="url" id="job-img" class="w-full p-2.5 border rounded-xl" placeholder="https://..." />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">المدينة *</label>
-            <input type="text" id="job-city" required class="w-full p-2.5 border rounded-xl" placeholder="الرياض" />
+          <div class="relative">
+            <input 
+              type="password" 
+              id="admin-password-input" 
+              placeholder="أدخل كلمة المرور..." 
+              required
+              class="w-full text-center px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold tracking-widest text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+            />
           </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">الأجر اليومي (ريال) *</label>
-            <input type="number" id="job-wage" required class="w-full p-2.5 border rounded-xl" placeholder="400" />
-          </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">تاريخ البدء *</label>
-            <input type="date" id="job-start" required class="w-full p-2.5 border rounded-xl" />
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">تاريخ الانتهاء *</label>
-            <input type="date" id="job-end" required class="w-full p-2.5 border rounded-xl" />
-          </div>
-        </div>
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">الوصف والمهام الوظيفية *</label>
-          <textarea id="job-desc" required rows="3" class="w-full p-2.5 border rounded-xl" placeholder="شرح تفصيلي للمهام..."></textarea>
+          <p id="login-error" class="hidden text-xs text-rose-500 font-bold mt-2">
+            <i class="fa-solid fa-circle-exclamation ml-1"></i> كلمة المرور غير صحيحة، حاول مجدداً!
+          </p>
         </div>
 
-        <div class="pt-3 flex gap-2">
-          <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">نشر الفعالية</button>
-          <button type="button" onclick="closeModal('modal-add-job')" class="px-4 py-2.5 border rounded-xl text-slate-600 font-bold">إلغاء</button>
-        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/20 text-sm">
+          دخول إلى النظام
+        </button>
       </form>
     </div>
   </div>
 
+  <!-- ==================== محتوى لوحة التحكم (مخفي افتراضياً) ==================== -->
+  <div id="admin-panel" class="hidden">
+    
+    <header class="bg-slate-900 text-white sticky top-0 z-40 border-b border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-xl">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-base leading-tight">لوحة تحكم المسؤول</h1>
+            <p class="text-[11px] text-slate-400">إدارة وظائف المواسم والفعاليات</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openModal('modal-add-job')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition shadow">
+            <i class="fa-solid fa-plus"></i> إضافة فعالية جديدة
+          </button>
+          <button onclick="handleLogout()" title="تسجيل الخروج" class="bg-slate-800 hover:bg-rose-600/20 hover:text-rose-400 text-slate-400 p-2 rounded-xl text-xs transition border border-slate-700">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-8">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-2xl font-black text-slate-900">قائمة الفعاليات المجدولة</h2>
+          <p class="text-xs text-slate-500 mt-0.5">يمكنك تعطيل ظهور أي فعالية أو فتح الرابط المنفصل لمراجعة متقدميها</p>
+        </div>
+        <button onclick="loadAdminJobs()" class="bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+          <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
+        </button>
+      </div>
+
+      <!-- جدول الفعاليات -->
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-right text-xs md:text-sm">
+            <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-4">الفعالية والوظيفة</th>
+                <th class="p-4">المدينة</th>
+                <th class="p-4">الفترة</th>
+                <th class="p-4">الأجر اليومي</th>
+                <th class="p-4">الظهور بالموقع</th>
+                <th class="p-4 text-center">المتقدمين والرابط المباشر</th>
+              </tr>
+            </thead>
+            <tbody id="admin-jobs-tbody" class="divide-y divide-slate-100">
+              <tr><td colspan="6" class="p-8 text-center text-slate-400">جاري جلب الفعاليات...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- مودال إضافة فعالية جديدة -->
+    <div id="modal-add-job" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+      <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl my-auto">
+        <div class="flex justify-between items-center mb-4 border-b pb-3">
+          <h3 class="font-extrabold text-lg text-slate-900">إضافة فعالية جديدة</h3>
+          <button onclick="closeModal('modal-add-job')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <form onsubmit="handleAddJob(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">اسم الوظيفة / الفعالية *</label>
+            <input type="text" id="job-title" required class="w-full p-2.5 border rounded-xl" placeholder="مثال: مسؤول تنظيم البوابات - موسم الدرعية" />
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رابط صورة الفعالية</label>
+            <input type="url" id="job-img" class="w-full p-2.5 border rounded-xl" placeholder="https://..." />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">المدينة *</label>
+              <input type="text" id="job-city" required class="w-full p-2.5 border rounded-xl" placeholder="الرياض" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">الأجر اليومي (ريال) *</label>
+              <input type="number" id="job-wage" required class="w-full p-2.5 border rounded-xl" placeholder="400" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">تاريخ البدء *</label>
+              <input type="date" id="job-start" required class="w-full p-2.5 border rounded-xl" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">تاريخ الانتهاء *</label>
+              <input type="date" id="job-end" required class="w-full p-2.5 border rounded-xl" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الوصف والمهام الوظيفية *</label>
+            <textarea id="job-desc" required rows="3" class="w-full p-2.5 border rounded-xl" placeholder="شرح تفصيلي للمهام..."></textarea>
+          </div>
+
+          <div class="pt-3 flex gap-2">
+            <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">نشر الفعالية</button>
+            <button type="button" onclick="closeModal('modal-add-job')" class="px-4 py-2.5 border rounded-xl text-slate-600 font-bold">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
   <script>
+    // ==========================================
+    // إعداد كلمة المرور (يمكنك تغييرها من هنا)
+    // ==========================================
+    const ADMIN_PASSWORD = "admin123";
+
     const SUPABASE_URL = "https://bigisnpdoqxmpjwpbncv.supabase.co";
     const SUPABASE_KEY = "sb_publishable_6ZtAL8lRYdreWg4Xhn6zLA_7-PwGvPJ";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    window.addEventListener('DOMContentLoaded', loadAdminJobs);
+    // التحقق من حالة الجلسة عند فتح الصفحة
+    window.addEventListener('DOMContentLoaded', () => {
+      const isAuth = sessionStorage.getItem('admin_logged_in');
+      if (isAuth === 'true') {
+        unlockDashboard();
+      }
+    });
 
+    // معالجة تسجيل الدخول
+    function handleLogin(e) {
+      e.preventDefault();
+      const input = document.getElementById('admin-password-input').value;
+      const errorMsg = document.getElementById('login-error');
+
+      if (input === ADMIN_PASSWORD) {
+        sessionStorage.setItem('admin_logged_in', 'true');
+        errorMsg.classList.add('hidden');
+        unlockDashboard();
+      } else {
+        errorMsg.classList.remove('hidden');
+        document.getElementById('admin-password-input').focus();
+      }
+    }
+
+    // إظهار لوحة التحكم وتحميل البيانات
+    function unlockDashboard() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('admin-panel').classList.remove('hidden');
+      loadAdminJobs();
+    }
+
+    // تسجيل الخروج
+    function handleLogout() {
+      sessionStorage.removeItem('admin_logged_in');
+      location.reload();
+    }
+
+    // جلب الوظائف من سوبابيز
     async function loadAdminJobs() {
       const tbody = document.getElementById('admin-jobs-tbody');
       const { data, error } = await supabaseClient.from('jobs').select('*').order('created_at', { ascending: false });
@@ -124,7 +213,6 @@
       }
 
       tbody.innerHTML = data.map(job => {
-        // رابط الصفحة المنفصلة لمتقدمي الفعالية
         const applicantsUrl = `applicants.html?job_id=${job.id}`;
 
         return `
