@@ -33,13 +33,13 @@
   <style>
   html, body {
     overflow-x: hidden;
-}
+  }
 
-    body { font-family: 'Tajawal', sans-serif; }
-    .glass-effect {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(8px);
-    }
+  body { font-family: 'Tajawal', sans-serif; }
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+  }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-brand-600 selection:text-white">
@@ -193,7 +193,9 @@
 
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">الجنسية *</label>
-              <select id="app-nationality" required class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-600 focus:outline-none transition"></select>
+              <select id="app-nationality" required class="w-full text-xs sm:text-sm p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-brand-600 focus:outline-none transition">
+                <option value="" selected disabled>اختر الجنسية</option>
+              </select>
             </div>
 
             <div class="sm:col-span-2">
@@ -269,14 +271,25 @@
     const SUPABASE_KEY = "sb_publishable_6ZtAL8lRYdreWg4Xhn6zLA_7-PwGvPJ";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-   const ARAB_COUNTRIES = [
+    const ARAB_COUNTRIES = [
       "المملكة العربية السعودية", "الإمارات العربية المتحدة", "الكويت", "قطر", "البحرين", "عمان",
       "مصر", "الأردن", "العراق", "لبنان", "سوريا", "فلسطين", "اليمن", "السودان", "المغرب",
-      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي","افغانستان","باكستان","تشاد","نيجيريا","النيجر","مالي","بوريكانافاسو","الهند","بنغلاديش","جزر القمر"
+      "الجزائر", "تونس", "ليبيا", "موريتانيا", "الصومال", "جيبوتي", "افغانستان", "باكستان", 
+      "تشاد", "نيجيريا", "النيجر", "مالي", "بوريكانافاسو", "الهند", "بنغلاديش", "جزر القمر"
     ];
 
     let currentJobs = [];
     let activeCityFilter = 'all';
+
+    // تعبئة قائمة الجنسيات مع جعل الخيار الافتراضي فارغاً
+    function initNationalityDropdown() {
+      const selectElement = document.getElementById('app-nationality');
+      let optionsHtml = '<option value="" selected disabled>اختر الجنسية</option>';
+      ARAB_COUNTRIES.forEach(country => {
+        optionsHtml += `<option value="${country}">${country}</option>`;
+      });
+      selectElement.innerHTML = optionsHtml;
+    }
 
     // 1. نظام إدارة الوظائف المقدم عليها محلياً
     function getAppliedJobIds() {
@@ -335,10 +348,7 @@
     // 3. التحميل والتهيئة
     window.addEventListener('DOMContentLoaded', () => {
       setupUserStatus();
-
-      const select = document.getElementById('app-nationality');
-      select.innerHTML = ARAB_COUNTRIES.map(c => `<option value="${c}">${c}</option>`).join('');
-
+      initNationalityDropdown();
       loadJobs();
     });
 
@@ -443,8 +453,6 @@
               <div class="p-4">
                 <h4 class="font-extrabold text-slate-900 text-base mb-1.5 line-clamp-1">${job.title}</h4>
                 <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-3">${job.description}</p>
-                
-                
               </div>
             </div>
 
@@ -472,15 +480,17 @@
 
       document.getElementById('app-job-id').value = job.id;
       document.getElementById('modal-job-title').innerText = job.title;
-      document.getElementById('modal-job-meta').innerText = `${job.city} • ${job.daily_wage} ريال يومياً`;
+      document.getElementById('modal-job-meta').innerText = `${job.city} • ${job.daily_wage || ''}`;
       document.getElementById('modal-job-desc').innerText = job.description || 'لا يوجد وصف تفصيلي إضافي.';
 
       const hasPreviousData = loadUserSavedData();
       const notificationBox = document.getElementById('autofill-notification');
+      
       if (hasPreviousData) {
         notificationBox.classList.remove('hidden');
       } else {
         notificationBox.classList.add('hidden');
+        document.getElementById('app-nationality').value = "";
       }
 
       openModal('modal-apply');
@@ -584,7 +594,7 @@
           `شكراً لك يا ${firstName}، تم استلام طلبك وحفظ بياناتك بنجاح.`;
         
         openModal('modal-success');
-        renderFilteredJobs(); // تحديث البطاقات لإظهار علامة "تم التقديم"
+        renderFilteredJobs();
       } catch (err) {
         alert("تعذر إرسال الطلب: " + err.message);
       } finally {
